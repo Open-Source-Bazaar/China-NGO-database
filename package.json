@@ -13,7 +13,6 @@
     "@strapi/plugin-color-picker": "~5.15.0",
     "@strapi/plugin-documentation": "~5.15.0",
     "@strapi/plugin-users-permissions": "~5.15.0",
-    "@strapi/provider-upload-aws-s3": "^5.15.0",
     "@strapi/strapi": "~5.15.0",
     "better-sqlite3": "^11.10.0",
     "cross-env": "^7.0.3",
@@ -24,6 +23,7 @@
     "react-router-dom": "^6.30.0",
     "strapi-location-picker": "^0.0.1",
     "strapi-plugin-multi-select": "^2.1.1",
+    "strapi-provider-cloudflare-r2": "^0.3.0",
     "styled-components": "^6.1.18"
   },
   "devDependencies": {
