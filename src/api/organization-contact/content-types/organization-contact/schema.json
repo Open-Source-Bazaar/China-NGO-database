@@ -14,7 +14,7 @@
   "attributes": {
     "organization": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "manyToOne",
       "target": "api::organization.organization",
       "inversedBy": "contacts"
     },
@@ -36,7 +36,8 @@
     "qr_code_images": {
       "type": "media",
       "multiple": true,
-      "allowedTypes": ["images"]
+      "allowedTypes": ["images"],
+      "allowedFormats": ["jpg", "jpeg", "png", "gif", "webp"]
     },
     "weibo": {
       "type": "string"

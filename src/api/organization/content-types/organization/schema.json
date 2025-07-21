@@ -75,7 +75,7 @@
     },
     "contacts": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::organization-contact.organization-contact",
       "mappedBy": "organization"
     },
