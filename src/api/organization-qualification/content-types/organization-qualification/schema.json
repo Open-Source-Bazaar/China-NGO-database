@@ -33,7 +33,17 @@
     "certificate_files": {
       "type": "media",
       "multiple": true,
-      "allowedTypes": ["images", "files"]
+      "allowedTypes": ["images", "files"],
+      "allowedFormats": [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "pdf",
+        "doc",
+        "docx"
+      ]
     }
   }
 }
