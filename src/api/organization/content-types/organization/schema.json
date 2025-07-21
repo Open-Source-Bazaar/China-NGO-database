@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "organizations",
+  "info": {
+    "singularName": "organization",
+    "pluralName": "organizations",
+    "displayName": "组织机构",
+    "description": "NGO组织的核心信息"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "code": {
+      "type": "string",
+      "unique": true
+    },
+    "contact_person": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "enumeration",
+      "enum": [
+        "foundation",
+        "ngo",
+        "association",
+        "company",
+        "government",
+        "school",
+        "other"
+      ]
+    },
+    "registration_country": {
+      "type": "enumeration",
+      "enum": ["china_mainland_hmt", "international"]
+    },
+    "location": {
+      "type": "string"
+    },
+    "address": {
+      "type": "text"
+    },
+    "established_date": {
+      "type": "date"
+    },
+    "operation_years": {
+      "type": "string"
+    },
+    "parent_organization": {
+      "type": "string"
+    },
+    "subsidiary_organizations": {
+      "type": "text"
+    },
+    "coverage_area": {
+      "type": "text"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "staff_count": {
+      "type": "string"
+    },
+    "services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization-service.organization-service",
+      "mappedBy": "organization"
+    },
+    "contacts": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::organization-contact.organization-contact",
+      "mappedBy": "organization"
+    },
+    "qualifications": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization-qualification.organization-qualification",
+      "mappedBy": "organization"
+    }
+  }
+}
