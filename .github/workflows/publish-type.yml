@@ -26,7 +26,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mv .env.example .env
           pnpm i
           pnpm build-type
           cd types/
