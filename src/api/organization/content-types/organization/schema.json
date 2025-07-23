@@ -24,6 +24,11 @@
     "contact_person": {
       "type": "string"
     },
+    "contact_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
     "entity_type": {
       "type": "enumeration",
       "enum": [
@@ -68,22 +73,24 @@
       "type": "string"
     },
     "services": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization-service.organization-service",
-      "mappedBy": "organization"
+      "type": "component",
+      "repeatable": true,
+      "component": "service.organization-service"
     },
-    "contacts": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization-contact.organization-contact",
-      "mappedBy": "organization"
+    "official_contacts": {
+      "type": "component",
+      "repeatable": true,
+      "component": "contact.internet-contact"
     },
     "qualifications": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::organization-qualification.organization-qualification",
-      "mappedBy": "organization"
+      "type": "component",
+      "repeatable": true,
+      "component": "qualification.certificate"
+    },
+    "internet_contact": {
+      "type": "component",
+      "repeatable": false,
+      "component": "contact.internet-contact"
     }
   }
 }

@@ -1,0 +1,46 @@
+{
+  "collectionName": "components_qualification_certificates",
+  "info": {
+    "displayName": "资质证书",
+    "description": "组织或个人的资质证书信息"
+  },
+  "options": {},
+  "attributes": {
+    "qualification_type": {
+      "type": "enumeration",
+      "enum": [
+        "tax_deduction_eligible",
+        "public_fundraising_qualified",
+        "tax_exempt_qualified",
+        "no_special_qualification"
+      ]
+    },
+    "certificate_name": {
+      "type": "string"
+    },
+    "certificate_files": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["images", "files"],
+      "allowedFormats": [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "pdf",
+        "doc",
+        "docx"
+      ]
+    },
+    "issue_date": {
+      "type": "date"
+    },
+    "expire_date": {
+      "type": "date"
+    },
+    "issuing_authority": {
+      "type": "string"
+    }
+  }
+}
