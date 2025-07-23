@@ -60,10 +60,16 @@
       "type": "string"
     },
     "parentOrganization": {
-      "type": "string"
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization.organization",
+      "inversedBy": "subsidiaryOrganizations"
     },
     "subsidiaryOrganizations": {
-      "type": "text"
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization.organization",
+      "mappedBy": "parentOrganization"
     },
     "coverageArea": {
       "type": "text"
