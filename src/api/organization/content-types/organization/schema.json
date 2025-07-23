@@ -21,15 +21,15 @@
       "type": "string",
       "unique": true
     },
-    "contact_person": {
+    "contactPerson": {
       "type": "string"
     },
-    "contact_user": {
+    "contactUser": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "plugin::users-permissions.user"
     },
-    "entity_type": {
+    "entityType": {
       "type": "enumeration",
       "enum": [
         "foundation",
@@ -41,7 +41,7 @@
         "other"
       ]
     },
-    "registration_country": {
+    "registrationCountry": {
       "type": "enumeration",
       "enum": ["china_mainland_hmt", "international"]
     },
@@ -51,25 +51,25 @@
     "address": {
       "type": "text"
     },
-    "established_date": {
+    "establishedDate": {
       "type": "date"
     },
-    "operation_years": {
+    "operationYears": {
       "type": "string"
     },
-    "parent_organization": {
+    "parentOrganization": {
       "type": "string"
     },
-    "subsidiary_organizations": {
+    "subsidiaryOrganizations": {
       "type": "text"
     },
-    "coverage_area": {
+    "coverageArea": {
       "type": "text"
     },
     "description": {
       "type": "richtext"
     },
-    "staff_count": {
+    "staffCount": {
       "type": "string"
     },
     "services": {
@@ -77,7 +77,7 @@
       "repeatable": true,
       "component": "service.organization-service"
     },
-    "official_contacts": {
+    "officialContacts": {
       "type": "component",
       "repeatable": true,
       "component": "contact.internet-contact"
@@ -87,7 +87,7 @@
       "repeatable": true,
       "component": "qualification.certificate"
     },
-    "internet_contact": {
+    "internetContact": {
       "type": "component",
       "repeatable": false,
       "component": "contact.internet-contact"

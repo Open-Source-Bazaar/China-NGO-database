@@ -81,7 +81,7 @@
       "repeatable": false,
       "component": "location.address"
     },
-    "internet_contact": {
+    "internetContact": {
       "type": "component",
       "repeatable": false,
       "component": "contact.internet-contact"

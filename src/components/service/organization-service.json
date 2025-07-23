@@ -6,7 +6,7 @@
   },
   "options": {},
   "attributes": {
-    "service_category": {
+    "serviceCategory": {
       "type": "enumeration",
       "enum": [
         "early_education",
@@ -27,39 +27,39 @@
         "other"
       ]
     },
-    "service_targets": {
+    "serviceTargets": {
       "type": "text"
     },
-    "service_content": {
+    "serviceContent": {
       "type": "text"
     },
-    "project_status": {
+    "projectStatus": {
       "type": "enumeration",
       "enum": ["ongoing", "completed", "paused", "terminated"]
     },
-    "target_groups": {
+    "targetGroups": {
       "type": "text"
     },
-    "support_methods": {
+    "supportMethods": {
       "type": "text"
     },
-    "serves_all_population": {
+    "servesAllPopulation": {
       "type": "boolean",
       "default": false
     },
-    "early_childhood_targets": {
+    "earlyChildhoodTargets": {
       "type": "enumeration",
       "enum": ["infants_toddlers", "preschoolers"]
     },
-    "primary_education_targets": {
+    "primaryEducationTargets": {
       "type": "enumeration",
       "enum": ["elementary_students", "middle_school_students"]
     },
-    "high_school_targets": {
+    "highSchoolTargets": {
       "type": "enumeration",
       "enum": ["general_high_school", "vocational_high_school"]
     },
-    "higher_education_targets": {
+    "higherEducationTargets": {
       "type": "enumeration",
       "enum": [
         "college_students",
@@ -67,7 +67,7 @@
         "graduate_students"
       ]
     },
-    "professional_education_targets": {
+    "professionalEducationTargets": {
       "type": "enumeration",
       "enum": ["teachers", "professionals", "students", "other"]
     }

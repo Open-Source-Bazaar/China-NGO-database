@@ -9,13 +9,13 @@
     "website": {
       "type": "string"
     },
-    "wechat_public": {
+    "wechatPublic": {
       "type": "string"
     },
     "weibo": {
       "type": "string"
     },
-    "qr_code_images": {
+    "qrCodeImages": {
       "type": "media",
       "multiple": true,
       "allowedTypes": ["images"],
