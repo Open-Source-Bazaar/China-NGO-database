@@ -6,7 +6,7 @@
   },
   "options": {},
   "attributes": {
-    "qualification_type": {
+    "qualificationType": {
       "type": "enumeration",
       "enum": [
         "tax_deduction_eligible",
@@ -15,10 +15,10 @@
         "no_special_qualification"
       ]
     },
-    "certificate_name": {
+    "certificateName": {
       "type": "string"
     },
-    "certificate_files": {
+    "certificateFiles": {
       "type": "media",
       "multiple": true,
       "allowedTypes": ["images", "files"],
@@ -33,13 +33,13 @@
         "docx"
       ]
     },
-    "issue_date": {
+    "issueDate": {
       "type": "date"
     },
-    "expire_date": {
+    "expireDate": {
       "type": "date"
     },
-    "issuing_authority": {
+    "issuingAuthority": {
       "type": "string"
     }
   }
