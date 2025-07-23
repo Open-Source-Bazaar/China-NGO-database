@@ -49,7 +49,9 @@
       "type": "string"
     },
     "address": {
-      "type": "text"
+      "type": "component",
+      "repeatable": false,
+      "component": "location.address"
     },
     "establishedDate": {
       "type": "date"
