@@ -2,7 +2,7 @@
   "collectionName": "components_service_organization_services",
   "info": {
     "displayName": "组织服务",
-    "description": "NGO组织提供的服务项目信息"
+    "description": "NGO 提供的服务项目信息"
   },
   "options": {},
   "attributes": {
