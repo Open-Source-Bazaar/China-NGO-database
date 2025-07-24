@@ -40,7 +40,7 @@
     },
     "registrationCountry": {
       "type": "enumeration",
-      "enum": ["china_mainland_hk_macao_tw", "international"]
+      "enum": ["china", "international"]
     },
     "address": {
       "type": "component",
