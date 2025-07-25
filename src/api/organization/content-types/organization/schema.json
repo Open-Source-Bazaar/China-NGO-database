@@ -1,0 +1,95 @@
+{
+  "kind": "collectionType",
+  "collectionName": "organizations",
+  "info": {
+    "singularName": "organization",
+    "pluralName": "organizations",
+    "displayName": "组织机构",
+    "description": "NGO 核心信息"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "code": {
+      "type": "string",
+      "unique": true
+    },
+    "contactUser": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "entityType": {
+      "type": "enumeration",
+      "enum": [
+        "foundation",
+        "ngo",
+        "association",
+        "company",
+        "government",
+        "school",
+        "other"
+      ]
+    },
+    "registrationCountry": {
+      "type": "enumeration",
+      "enum": ["china", "international"]
+    },
+    "address": {
+      "type": "component",
+      "repeatable": false,
+      "component": "location.address"
+    },
+    "establishedDate": {
+      "type": "date"
+    },
+    "parentOrganization": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization.organization",
+      "inversedBy": "subsidiaryOrganizations"
+    },
+    "subsidiaryOrganizations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::organization.organization",
+      "mappedBy": "parentOrganization"
+    },
+    "coverageArea": {
+      "type": "text"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "staffCount": {
+      "type": "integer"
+    },
+    "services": {
+      "type": "component",
+      "repeatable": true,
+      "component": "service.organization-service"
+    },
+    "officialContacts": {
+      "type": "component",
+      "repeatable": true,
+      "component": "contact.internet-contact"
+    },
+    "qualifications": {
+      "type": "component",
+      "repeatable": true,
+      "component": "qualification.certificate"
+    },
+    "internetContact": {
+      "type": "component",
+      "repeatable": false,
+      "component": "contact.internet-contact"
+    }
+  }
+}

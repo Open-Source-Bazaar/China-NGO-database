@@ -80,6 +80,22 @@
       "type": "component",
       "repeatable": false,
       "component": "location.address"
+    },
+    "internetContact": {
+      "type": "component",
+      "repeatable": false,
+      "component": "contact.internet-contact"
+    },
+    "position": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "qualifications": {
+      "type": "component",
+      "repeatable": true,
+      "component": "qualification.certificate"
     }
   }
 }

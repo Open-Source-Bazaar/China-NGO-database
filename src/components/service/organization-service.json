@@ -1,0 +1,75 @@
+{
+  "collectionName": "components_service_organization_services",
+  "info": {
+    "displayName": "组织服务",
+    "description": "NGO 提供的服务项目信息"
+  },
+  "options": {},
+  "attributes": {
+    "serviceCategory": {
+      "type": "enumeration",
+      "enum": [
+        "early_education",
+        "primary_education",
+        "secondary_education",
+        "higher_education",
+        "vocational_education",
+        "continuing_education",
+        "special_education",
+        "community_education",
+        "policy_research",
+        "teacher_development",
+        "educational_content",
+        "educational_hardware",
+        "student_support",
+        "literacy_programs",
+        "organization_support",
+        "other"
+      ]
+    },
+    "serviceTargets": {
+      "type": "text"
+    },
+    "serviceContent": {
+      "type": "text"
+    },
+    "projectStatus": {
+      "type": "enumeration",
+      "enum": ["ongoing", "completed", "paused", "terminated"]
+    },
+    "targetGroups": {
+      "type": "text"
+    },
+    "supportMethods": {
+      "type": "text"
+    },
+    "servesAllPopulation": {
+      "type": "boolean",
+      "default": false
+    },
+    "earlyChildhoodTargets": {
+      "type": "enumeration",
+      "enum": ["infants_toddlers", "preschoolers"]
+    },
+    "primaryEducationTargets": {
+      "type": "enumeration",
+      "enum": ["elementary_students", "middle_school_students"]
+    },
+    "highSchoolTargets": {
+      "type": "enumeration",
+      "enum": ["general_high_school", "vocational_high_school"]
+    },
+    "higherEducationTargets": {
+      "type": "enumeration",
+      "enum": [
+        "college_students",
+        "undergraduate_students",
+        "graduate_students"
+      ]
+    },
+    "professionalEducationTargets": {
+      "type": "enumeration",
+      "enum": ["teachers", "professionals", "students", "other"]
+    }
+  }
+}

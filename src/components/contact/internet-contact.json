@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_contact_internet_contacts",
+  "info": {
+    "displayName": "互联网联系方式",
+    "description": "网站、社交媒体、二维码等在线联系方式"
+  },
+  "options": {},
+  "attributes": {
+    "website": {
+      "type": "string"
+    },
+    "wechatPublic": {
+      "type": "string"
+    },
+    "weibo": {
+      "type": "string"
+    },
+    "qrCodeImages": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["images"],
+      "allowedFormats": ["jpg", "jpeg", "png", "gif", "webp"]
+    }
+  }
+}
