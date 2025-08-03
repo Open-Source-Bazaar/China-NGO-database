@@ -6,6 +6,8 @@ networks:
 services:
   postgres-server:
     image: postgres
+    security_opt:
+      - no-new-privileges:true
     environment:
       - POSTGRES_PASSWORD=${ADMIN_JWT_SECRET}
     volumes:
@@ -18,6 +20,8 @@ services:
     depends_on:
       - postgres-server
     image: idea2app/strapi-pnpm-docker-ts
+    security_opt:
+      - no-new-privileges:true
     environment:
       - DATABASE_CLIENT=postgres
       - DATABASE_URL=postgres://postgres:${ADMIN_JWT_SECRET}@postgres-server:5432/postgres
@@ -39,6 +43,8 @@ services:
 
   autoheal:
     image: willfarrell/autoheal:1.2.0
+    security_opt:
+      - no-new-privileges:true
     networks:
       - idea2app
     volumes:
