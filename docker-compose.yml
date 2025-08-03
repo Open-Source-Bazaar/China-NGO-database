@@ -55,6 +55,8 @@ services:
     depends_on:
       - strapi-server
     image: caddy
+    security_opt:
+      - no-new-privileges:true
     networks:
       - idea2app
     ports:
