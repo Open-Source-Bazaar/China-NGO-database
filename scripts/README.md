@@ -8,7 +8,7 @@
 - 🔄 **数据转换**: 自动转换 Excel 数据格式为 Strapi 兼容格式
 - 🛡️ **安全检查**: 防止重复数据，支持干运行模式
 - 📈 **批量处理**: 支持批量导入，避免 API 限制
-- 📝 **详细日志**: 提供详细的导入进度和错误信息
+- 📝 **详细日志**: 提供详细的导入进度和错误信息，失败和跳过的记录自动保存到日志文件
 - 🔧 **灵活配置**: 支持环境变量配置各种参数
 
 ## 文件说明
@@ -217,6 +217,7 @@ node import-data.js --dry-run
 3. **查看详细错误信息**
    - 脚本会输出详细的错误信息
    - 检查 Strapi 服务器日志
+   - 查看 `logs/` 目录下自动生成的错误日志文件
 
 ## 扩展功能
 
@@ -237,6 +238,48 @@ node import-data.js --dry-run
 1. 调整 `BATCH_SIZE` 参数
 2. 实现并行处理
 3. 添加数据缓存机制
+
+## 日志文件
+
+导入过程中，失败和跳过的记录会**实时追加**保存到 `logs/` 目录下：
+
+- **`import-failed-[timestamp].log`** - 记录创建失败的组织信息及错误详情
+- **`import-skipped-[timestamp].log`** - 记录被跳过的组织信息及跳过原因
+
+### 特性
+
+- ✅ **实时写入**: 每次失败或跳过都立即写入日志文件
+- ✅ **断点续传**: 即使程序被强制终止(Ctrl+C)，已记录的日志也不会丢失
+- ✅ **信号处理**: 支持 SIGINT、SIGTERM、SIGQUIT 信号的优雅退出
+
+### 日志文件格式示例
+
+```log
+# 失败记录
+# Import Log - 2025-01-01T12:00:00.000Z
+# Format: [timestamp] organization_name | error/reason
+
+[2025-01-01T12:05:30.123Z] 示例NGO组织 | Validation error: name already exists
+   详细错误: {
+     "field": "name",
+     "message": "Name already exists"
+   }
+
+[2025-01-01T12:05:32.456Z] 另一个组织 | Network error: timeout
+   详细错误: {
+     "code": "ECONNRESET",
+     "message": "socket hang up"
+   }
+
+# 导入完成统计 - 2025-01-01T12:15:00.000Z
+# 总失败数: 2
+```
+
+### 使用日志文件排除问题
+
+1. **分析失败原因**: 查看 `errorDetails` 字段了解具体错误
+2. **修复数据问题**: 根据错误信息修正 Excel 文件中的数据
+3. **重新导入**: 修复后重新运行导入脚本
 
 ## 许可证
 
