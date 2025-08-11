@@ -124,13 +124,13 @@ EXCEL_FILE=my-data.xlsx STRAPI_TOKEN=your_api_token node import-data.js
 
 ### 环境变量
 
-| 变量名         | 默认值                                 | 说明                                   |
-| -------------- | -------------------------------------- | -------------------------------------- |
-| `STRAPI_URL`   | `http://localhost:1337`                | Strapi 服务器地址                      |
-| `STRAPI_TOKEN` | -                                      | Strapi API Token（必填，除非 DRY_RUN） |
-| `EXCEL_FILE`   | `教育公益开放式数据库1.0版的副本.xlsx` | Excel 文件路径                         |
-| `BATCH_SIZE`   | `10`                                   | 批量处理大小                           |
-| `DRY_RUN`      | `false`                                | 是否为模拟模式                         |
+| 变量名         | 默认值                      | 说明                                   |
+| -------------- | --------------------------- | -------------------------------------- |
+| `STRAPI_URL`   | `http://localhost:1337`     | Strapi 服务器地址                      |
+| `STRAPI_TOKEN` | -                           | Strapi API Token（必填，除非 DRY_RUN） |
+| `EXCEL_FILE`   | `教育公益开放式数据库.xlsx` | Excel 文件路径                         |
+| `BATCH_SIZE`   | `10`                        | 批量处理大小                           |
+| `DRY_RUN`      | `false`                     | 是否为模拟模式                         |
 
 ### 命令行选项
 
