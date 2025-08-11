@@ -13,10 +13,12 @@ const path = require('path');
 // config
 const CONFIG = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
-  STRAPI_TOKEN: process.env.STRAPI_TOKEN || '', // Strapi API Token
+  STRAPI_TOKEN:
+    process.env.STRAPI_TOKEN ||
+    'ec62196b162352395d8259d645fcce3e361339ee72a0f0f0023f7cf9b2af86c6595619e54af6101723bba66fe38567c8987f17b4f69f1fd44db79e7a0467a11a6f9ff647ff1ea49af85a8d549effcaf6f38652daa8b04ae90799eee0b115ee8083a7723db7ab1f8038908bc585745aee52c652b7acd26dc87cae616bfa61465a', // Strapi API Token
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null, // sheet name, null to use the first one
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 5, // batch size
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 2, // batch size
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS) || 0, // 0 to import all rows
 };
@@ -185,7 +187,8 @@ class DataTransformer {
         street: excelRow['具体地址'] || excelRow.street || '',
       }),
       services: this.transformServices(excelRow),
-      officialContacts: this.transformContacts(excelRow),
+      internetContact: this.transformContacts(excelRow),
+      qualifications: this.transformQualifications(excelRow),
       publishedAt: new Date().toISOString(),
     };
   }
@@ -378,7 +381,7 @@ class DataTransformer {
         services.push({
           serviceCategory,
           serviceContent: value,
-          targetGroups: this.extractTargetGroups(excelRow),
+          serviceTargets: this.extractTargetGroups(excelRow),
           supportMethods: value,
           projectStatus: 'ongoing',
           servesAllPopulation:
@@ -392,7 +395,7 @@ class DataTransformer {
       services.push({
         serviceCategory: 'other',
         serviceContent: excelRow[' 关于行业类服务对象'],
-        targetGroups: excelRow[' 关于行业类服务对象'],
+        serviceTargets: excelRow[' 关于行业类服务对象'],
         supportMethods: '',
         projectStatus: 'ongoing',
         servesAllPopulation: false,
@@ -421,54 +424,72 @@ class DataTransformer {
   }
 
   static transformContacts(excelRow) {
-    const contacts = [];
+    const contact = {};
 
     // 官网
     const website = excelRow['机构官网'] || excelRow.website;
     if (website) {
-      contacts.push({
-        platform: 'website',
-        accountId: website.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-      });
-    }
-
-    // email
-    const email = excelRow['机构联系人联系人邮箱'] || excelRow.email;
-    if (email) {
-      contacts.push({
-        platform: 'email',
-        accountId: email,
-      });
-    }
-
-    // 电话
-    const phone = excelRow['机构联系人联系人电话'] || excelRow.phone;
-    if (phone) {
-      contacts.push({
-        platform: 'phone',
-        accountId: phone.replace(/\s+/g, ''),
-      });
+      contact.website = website;
     }
 
     // 微信公众号
     const wechat = excelRow['机构微信公众号'];
     if (wechat) {
-      contacts.push({
-        platform: 'wechat',
-        accountId: wechat.replace(/^@/, ''),
-      });
+      contact.wechatPublic = wechat;
     }
 
     // 微博
     const weibo = excelRow['机构微博'];
     if (weibo) {
-      contacts.push({
-        platform: 'weibo',
-        accountId: weibo.replace(/^@/, ''),
+      contact.weibo = weibo;
+    }
+
+    return contact;
+  }
+
+  static transformQualifications(excelRow) {
+    const qualifications = [];
+
+    // Check for various qualification indicators in the data
+    const qualificationIndicators = [
+      '免税资格',
+      '税前扣除资格',
+      '公开募捐资格',
+      '公益性捐赠税前扣除资格',
+      '慈善组织认定',
+      '社会组织评估等级',
+    ];
+
+    qualificationIndicators.forEach((indicator) => {
+      if (excelRow[indicator]) {
+        let qualificationType = 'no_special_qualification';
+
+        if (indicator.includes('免税') || indicator.includes('税前扣除')) {
+          qualificationType = 'tax_deduction_eligible';
+        } else if (indicator.includes('公开募捐')) {
+          qualificationType = 'public_fundraising_qualified';
+        } else if (indicator.includes('慈善组织')) {
+          qualificationType = 'tax_exempt_qualified';
+        }
+
+        qualifications.push({
+          qualificationType,
+          certificateName: indicator,
+          issuingAuthority: '相关主管部门',
+        });
+      }
+    });
+
+    // Add general qualification if organization has any legal status
+    if (excelRow['登记管理机关'] && qualifications.length === 0) {
+      qualifications.push({
+        qualificationType: 'no_special_qualification',
+        certificateName: '社会组织登记证书',
+        issuingAuthority: excelRow['登记管理机关'],
       });
     }
 
-    return contacts;
+    return qualifications;
   }
 }
 
@@ -579,7 +600,7 @@ class DataImporter {
       }
 
       // create organization
-      const result = await this.api.createOrganization(orgData);
+      await this.api.createOrganization(orgData);
       console.log(`✓ 成功创建组织: ${orgData.name}`);
       this.stats.success++;
     } catch (error) {
