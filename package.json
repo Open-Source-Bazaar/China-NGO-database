@@ -24,6 +24,7 @@
     "strapi-plugin-config-sync": "^3.1.2",
     "strapi-plugin-multi-select": "^2.1.1",
     "strapi-provider-cloudflare-r2": "^0.3.0",
+    "styled-components": "^6.1.19",
     "xlsx": "^0.18.5",
     "axios": "^1.6.0"
   },
