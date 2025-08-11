@@ -16,7 +16,7 @@ const CONFIG = {
   STRAPI_TOKEN: process.env.STRAPI_TOKEN || '', // Strapi API Token
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null, // sheet name, null to use the first one
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 5, // batch size
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 10, // batch size
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS) || 0, // 0 to import all rows
 };
@@ -185,7 +185,8 @@ class DataTransformer {
         street: excelRow['具体地址'] || excelRow.street || '',
       }),
       services: this.transformServices(excelRow),
-      officialContacts: this.transformContacts(excelRow),
+      internetContact: this.transformContacts(excelRow),
+      qualifications: this.transformQualifications(excelRow),
       publishedAt: new Date().toISOString(),
     };
   }
@@ -310,35 +311,69 @@ class DataTransformer {
   static parseDate(dateStr) {
     if (!dateStr) return null;
 
+    // 确保 dateStr 是字符串
+    const dateString = String(dateStr).trim();
+    if (!dateString) return null;
+
+    // 如果是数字，可能是 Excel 的序列号或年份
+    if (/^\d+$/.test(dateString)) {
+      const num = parseInt(dateString);
+
+      // 如果是4位数，当作年份处理
+      if (num >= 1900 && num <= 2100) {
+        return `${num}-01-01`;
+      }
+
+      // 如果是 Excel 序列号（通常大于 25000），转换为日期
+      if (num > 25000) {
+        try {
+          // Excel 日期从 1900-01-01 开始计算（但需要减去1，因为Excel错误地认为1900年是闰年）
+          const excelEpoch = new Date(1900, 0, 1);
+          const date = new Date(
+            excelEpoch.getTime() + (num - 2) * 24 * 60 * 60 * 1000,
+          );
+          return date.toISOString().split('T')[0];
+        } catch (error) {
+          console.warn(`Excel日期序列号转换失败: ${dateString}`);
+          return null;
+        }
+      }
+    }
+
     // handle chinese date format: 2015年6月3日
-    const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+    const chineseMatch = dateString.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
     if (chineseMatch) {
       const [, year, month, day] = chineseMatch;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 
     // handle year-month format: 2011年5月
-    const yearMonthMatch = dateStr.match(/(\d{4})年(\d{1,2})月/);
+    const yearMonthMatch = dateString.match(/(\d{4})年(\d{1,2})月/);
     if (yearMonthMatch) {
       const [, year, month] = yearMonthMatch;
       return `${year}-${month.padStart(2, '0')}-01`;
     }
 
     // handle year format: 2014年
-    const yearMatch = dateStr.match(/(\d{4})年/);
+    const yearMatch = dateString.match(/(\d{4})年/);
     if (yearMatch) {
       return `${yearMatch[1]}-01-01`;
     }
 
     // handle pure numeric year: 2014
-    const simpleYearMatch = dateStr.match(/^\d{4}$/);
+    const simpleYearMatch = dateString.match(/^\d{4}$/);
     if (simpleYearMatch) {
-      return `${dateStr}-01-01`;
+      return `${dateString}-01-01`;
     }
 
     // try to parse directly
-    const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+    } catch (error) {
+      console.warn(`日期解析失败: ${dateString}`);
+      return null;
+    }
   }
 
   static transformServices(excelRow) {
@@ -378,7 +413,7 @@ class DataTransformer {
         services.push({
           serviceCategory,
           serviceContent: value,
-          targetGroups: this.extractTargetGroups(excelRow),
+          serviceTargets: this.extractTargetGroups(excelRow),
           supportMethods: value,
           projectStatus: 'ongoing',
           servesAllPopulation:
@@ -392,7 +427,7 @@ class DataTransformer {
       services.push({
         serviceCategory: 'other',
         serviceContent: excelRow[' 关于行业类服务对象'],
-        targetGroups: excelRow[' 关于行业类服务对象'],
+        serviceTargets: excelRow[' 关于行业类服务对象'],
         supportMethods: '',
         projectStatus: 'ongoing',
         servesAllPopulation: false,
@@ -421,54 +456,72 @@ class DataTransformer {
   }
 
   static transformContacts(excelRow) {
-    const contacts = [];
+    const contact = {};
 
     // 官网
     const website = excelRow['机构官网'] || excelRow.website;
     if (website) {
-      contacts.push({
-        platform: 'website',
-        accountId: website.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-      });
-    }
-
-    // email
-    const email = excelRow['机构联系人联系人邮箱'] || excelRow.email;
-    if (email) {
-      contacts.push({
-        platform: 'email',
-        accountId: email,
-      });
-    }
-
-    // 电话
-    const phone = excelRow['机构联系人联系人电话'] || excelRow.phone;
-    if (phone) {
-      contacts.push({
-        platform: 'phone',
-        accountId: phone.replace(/\s+/g, ''),
-      });
+      contact.website = website;
     }
 
     // 微信公众号
     const wechat = excelRow['机构微信公众号'];
     if (wechat) {
-      contacts.push({
-        platform: 'wechat',
-        accountId: wechat.replace(/^@/, ''),
-      });
+      contact.wechatPublic = wechat;
     }
 
     // 微博
     const weibo = excelRow['机构微博'];
     if (weibo) {
-      contacts.push({
-        platform: 'weibo',
-        accountId: weibo.replace(/^@/, ''),
+      contact.weibo = weibo;
+    }
+
+    return contact;
+  }
+
+  static transformQualifications(excelRow) {
+    const qualifications = [];
+
+    // Check for various qualification indicators in the data
+    const qualificationIndicators = [
+      '免税资格',
+      '税前扣除资格',
+      '公开募捐资格',
+      '公益性捐赠税前扣除资格',
+      '慈善组织认定',
+      '社会组织评估等级',
+    ];
+
+    qualificationIndicators.forEach((indicator) => {
+      if (excelRow[indicator]) {
+        let qualificationType = 'no_special_qualification';
+
+        if (indicator.includes('免税') || indicator.includes('税前扣除')) {
+          qualificationType = 'tax_deduction_eligible';
+        } else if (indicator.includes('公开募捐')) {
+          qualificationType = 'public_fundraising_qualified';
+        } else if (indicator.includes('慈善组织')) {
+          qualificationType = 'tax_exempt_qualified';
+        }
+
+        qualifications.push({
+          qualificationType,
+          certificateName: indicator,
+          issuingAuthority: '相关主管部门',
+        });
+      }
+    });
+
+    // Add general qualification if organization has any legal status
+    if (excelRow['登记管理机关'] && qualifications.length === 0) {
+      qualifications.push({
+        qualificationType: 'no_special_qualification',
+        certificateName: '社会组织登记证书',
+        issuingAuthority: excelRow['登记管理机关'],
       });
     }
 
-    return contacts;
+    return qualifications;
   }
 }
 
@@ -521,10 +574,121 @@ class ExcelReader {
   }
 }
 
+// Logger class for tracking import results
+class ImportLogger {
+  constructor() {
+    this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    this.logDir = 'logs';
+    this.failedFile = path.join(
+      this.logDir,
+      `import-failed-${this.timestamp}.log`,
+    );
+    this.skippedFile = path.join(
+      this.logDir,
+      `import-skipped-${this.timestamp}.log`,
+    );
+    this.failedCount = 0;
+    this.skippedCount = 0;
+
+    // Create logs directory if it doesn't exist
+    if (!fs.existsSync(this.logDir)) {
+      fs.mkdirSync(this.logDir, { recursive: true });
+    }
+
+    // Initialize log files with headers
+    this.initLogFiles();
+  }
+
+  initLogFiles() {
+    const header = `# Import Log - ${new Date().toISOString()}\n# Format: [timestamp] organization_name | error/reason\n\n`;
+
+    fs.writeFileSync(this.failedFile, `# 失败记录\n${header}`);
+    fs.writeFileSync(this.skippedFile, `# 跳过记录\n${header}`);
+
+    console.log(`📝 日志文件已初始化:`);
+    console.log(`   失败记录: ${this.failedFile}`);
+    console.log(`   跳过记录: ${this.skippedFile}`);
+  }
+
+  logFailed(orgData, error) {
+    this.failedCount++;
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      organization: {
+        name: orgData.name,
+        code: orgData.code,
+        entityType: orgData.entityType,
+        registrationCountry: orgData.registrationCountry,
+      },
+      error: error.message,
+      errorDetails: error.response?.data || error.stack,
+    };
+
+    // Append to log file immediately
+    const logLine = `[${logEntry.timestamp}] ${orgData.name} | ${error.message}\n`;
+    const detailLine = `   详细错误: ${JSON.stringify(logEntry.errorDetails, null, 2).replace(/\n/g, '\n   ')}\n\n`;
+
+    fs.appendFileSync(this.failedFile, logLine + detailLine);
+  }
+
+  logSkipped(orgData, reason) {
+    this.skippedCount++;
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      organization: {
+        name: orgData.name,
+        code: orgData.code,
+        entityType: orgData.entityType,
+        registrationCountry: orgData.registrationCountry,
+      },
+      reason: reason,
+    };
+
+    // Append to log file immediately
+    const logLine = `[${logEntry.timestamp}] ${orgData.name} | ${reason}\n`;
+    const detailLine = `   详细信息: ${JSON.stringify(logEntry.organization, null, 2).replace(/\n/g, '\n   ')}\n\n`;
+
+    fs.appendFileSync(this.skippedFile, logLine + detailLine);
+  }
+
+  saveToFiles() {
+    // Add summary to log files
+    const summary = `\n# 导入完成统计 - ${new Date().toISOString()}\n`;
+
+    if (this.failedCount > 0) {
+      fs.appendFileSync(
+        this.failedFile,
+        `${summary}# 总失败数: ${this.failedCount}\n`,
+      );
+      console.log(
+        `✗ 失败记录已保存: ${this.failedFile} (${this.failedCount} 条)`,
+      );
+    }
+
+    if (this.skippedCount > 0) {
+      fs.appendFileSync(
+        this.skippedFile,
+        `${summary}# 总跳过数: ${this.skippedCount}\n`,
+      );
+      console.log(
+        `📝 跳过记录已保存: ${this.skippedFile} (${this.skippedCount} 条)`,
+      );
+    }
+  }
+
+  getSummary() {
+    return {
+      failed: this.failedCount,
+      skipped: this.skippedCount,
+    };
+  }
+}
+
 // data importer
 class DataImporter {
   constructor(api) {
     this.api = api;
+    this.logger = new ImportLogger();
     this.stats = {
       total: 0,
       success: 0,
@@ -551,6 +715,7 @@ class DataImporter {
     }
 
     this.printStats();
+    this.logger.saveToFiles();
   }
 
   async processBatch(organizations) {
@@ -567,6 +732,7 @@ class DataImporter {
         const existing = await this.api.findOrganizationByName(orgData.name);
         if (existing) {
           console.log(`跳过已存在的组织: ${orgData.name}`);
+          this.logger.logSkipped(orgData, '组织已存在');
           this.stats.skipped++;
           return;
         }
@@ -579,11 +745,12 @@ class DataImporter {
       }
 
       // create organization
-      const result = await this.api.createOrganization(orgData);
+      await this.api.createOrganization(orgData);
       console.log(`✓ 成功创建组织: ${orgData.name}`);
       this.stats.success++;
     } catch (error) {
       console.error(`✗ 创建组织失败: ${orgData.name}`, error.message);
+      this.logger.logFailed(orgData, error);
       this.stats.failed++;
     }
   }
@@ -604,6 +771,22 @@ class DataImporter {
 
 // main function
 async function main() {
+  let importer = null;
+
+  // 处理进程信号，确保强制退出时保存日志
+  const handleExit = (signal) => {
+    console.log(`\n收到 ${signal} 信号，正在保存日志...`);
+    if (importer && importer.logger) {
+      importer.logger.saveToFiles();
+      console.log('日志已保存，程序退出。');
+    }
+    process.exit(0);
+  };
+
+  process.on('SIGINT', handleExit); // Ctrl+C
+  process.on('SIGTERM', handleExit); // 终止信号
+  process.on('SIGQUIT', handleExit); // 退出信号
+
   try {
     console.log('=== Strapi 数据导入工具 ===\n');
 
@@ -636,10 +819,9 @@ async function main() {
         try {
           return DataTransformer.transformOrganization(row);
         } catch (error) {
-          console.warn(
-            `转换数据失败，跳过行: ${row['常用名称'] || 'Unknown'}`,
-            error.message,
-          );
+          const orgName = row['常用名称'] || row.name || 'Unknown';
+          console.warn(`转换数据失败，跳过行: ${orgName}`, error.message);
+          // 可选：记录转换失败的详细信息到日志
           return null;
         }
       })
@@ -659,7 +841,7 @@ async function main() {
     const api = new StrapiAPI(CONFIG.STRAPI_URL, CONFIG.STRAPI_TOKEN);
 
     // initialize importer
-    const importer = new DataImporter(api);
+    importer = new DataImporter(api);
 
     // start import
     await importer.importOrganizations(organizations);
