@@ -1,29 +1,136 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 
 /**
  * Strapi database import script
  * support import NGO organization data from Excel file to Strapi database
  */
 
-const XLSX = require('xlsx');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+import * as XLSX from 'xlsx';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+// Types
+interface Config {
+  STRAPI_URL: string;
+  STRAPI_TOKEN: string;
+  EXCEL_FILE: string;
+  SHEET_NAME: string | null;
+  BATCH_SIZE: number;
+  DRY_RUN: boolean;
+  MAX_ROWS: number;
+}
+
+interface Address {
+  country?: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  street?: string;
+  building?: string;
+  floor?: string;
+  room?: string;
+}
+
+interface Service {
+  serviceCategory: string;
+  serviceContent: string;
+  serviceTargets: string;
+  supportMethods: string;
+  projectStatus: string;
+  servesAllPopulation: boolean;
+}
+
+interface InternetContact {
+  website?: string;
+  wechatPublic?: string;
+  weibo?: string;
+}
+
+interface Qualification {
+  qualificationType: string;
+  certificateName: string;
+  issuingAuthority: string;
+}
+
+interface OrganizationData {
+  name: string;
+  code?: string;
+  entityType: string;
+  registrationCountry: string;
+  establishedDate?: string | null;
+  coverageArea?: string;
+  description?: string;
+  staffCount?: number;
+  address?: Address;
+  services?: Service[];
+  internetContact?: InternetContact;
+  qualifications?: Qualification[];
+  publishedAt: string;
+}
+
+interface ExcelRow {
+  [key: string]: any;
+  常用名称?: string;
+  name?: string;
+  机构信用代码?: string;
+  code?: string;
+  实体类型?: string;
+  entityType?: string;
+  注册国籍?: string;
+  registrationCountry?: string;
+  成立时间?: string | number;
+  establishedDate?: string | number;
+  '机构／项目简介'?: string;
+  description?: string;
+  '机构／项目全职人数'?: string | number;
+  staffCount?: string | number;
+  注册地?: string;
+  具体地址?: string;
+  street?: string;
+  机构官网?: string;
+  website?: string;
+  机构微信公众号?: string;
+  机构微博?: string;
+  登记管理机关?: string;
+}
+
+interface ImportStats {
+  total: number;
+  success: number;
+  failed: number;
+  skipped: number;
+}
+
+interface LogEntry {
+  timestamp: string;
+  organization: {
+    name: string;
+    code?: string;
+    entityType: string;
+    registrationCountry: string;
+  };
+  error?: string;
+  errorDetails?: any;
+  reason?: string;
+}
 
 // config
-const CONFIG = {
+const CONFIG: Config = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
   STRAPI_TOKEN: process.env.STRAPI_TOKEN || '', // Strapi API Token
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null, // sheet name, null to use the first one
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 10, // batch size
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'), // batch size
   DRY_RUN: process.env.DRY_RUN === 'true',
-  MAX_ROWS: parseInt(process.env.MAX_ROWS) || 0, // 0 to import all rows
+  MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'), // 0 to import all rows
 };
 
 // API client
 class StrapiAPI {
-  constructor(baseURL, token) {
+  private client: AxiosInstance;
+
+  constructor(baseURL: string, token: string) {
     this.client = axios.create({
       baseURL,
       headers: {
@@ -33,11 +140,14 @@ class StrapiAPI {
     });
   }
 
-  async createOrganization(data) {
+  async createOrganization(data: OrganizationData): Promise<any> {
     try {
-      const response = await this.client.post('/api/organizations', { data });
+      const response: AxiosResponse = await this.client.post(
+        '/api/organizations',
+        { data },
+      );
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         'create organization failed:',
         error.response?.data || error.message,
@@ -46,13 +156,13 @@ class StrapiAPI {
     }
   }
 
-  async findOrganizationByName(name) {
+  async findOrganizationByName(name: string): Promise<any> {
     try {
-      const response = await this.client.get(
+      const response: AxiosResponse = await this.client.get(
         `/api/organizations?filters[name][$eq]=${encodeURIComponent(name)}`,
       );
       return response.data.data[0] || null;
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         'find organization failed:',
         error.response?.data || error.message,
@@ -61,11 +171,14 @@ class StrapiAPI {
     }
   }
 
-  async createUser(data) {
+  async createUser(data: any): Promise<any> {
     try {
-      const response = await this.client.post('/api/users', data);
+      const response: AxiosResponse = await this.client.post(
+        '/api/users',
+        data,
+      );
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         'create user failed:',
         error.response?.data || error.message,
@@ -74,13 +187,13 @@ class StrapiAPI {
     }
   }
 
-  async findUserByEmail(email) {
+  async findUserByEmail(email: string): Promise<any> {
     try {
-      const response = await this.client.get(
+      const response: AxiosResponse = await this.client.get(
         `/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
       );
       return response.data[0] || null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('查找用户失败:', error.response?.data || error.message);
       return null;
     }
@@ -89,7 +202,7 @@ class StrapiAPI {
 
 // 数据转换工具
 class DataTransformer {
-  static transformAddress(addressData) {
+  static transformAddress(addressData?: Partial<Address>): Address | null {
     if (!addressData) return null;
 
     return {
@@ -104,10 +217,10 @@ class DataTransformer {
     };
   }
 
-  static transformEntityType(entityType) {
+  static transformEntityType(entityType?: string): string {
     if (!entityType) return 'other';
 
-    const mapping = {
+    const mapping: Record<string, string> = {
       基金会: 'foundation',
       '社会服务机构（民非/NGO）': 'ngo',
       民办非企业单位: 'ngo',
@@ -128,8 +241,8 @@ class DataTransformer {
     return 'other';
   }
 
-  static transformServiceCategory(category) {
-    const mapping = {
+  static transformServiceCategory(category?: string): string {
+    const mapping: Record<string, string> = {
       学前教育: 'early_education',
       小学教育: 'primary_education',
       中学教育: 'secondary_education',
@@ -147,10 +260,10 @@ class DataTransformer {
       组织支持: 'organization_support',
       其他: 'other',
     };
-    return mapping[category] || 'other';
+    return mapping[category || ''] || 'other';
   }
 
-  static transformOrganization(excelRow) {
+  static transformOrganization(excelRow: ExcelRow): OrganizationData {
     return {
       name: excelRow['常用名称'] || excelRow.name || '',
       code: excelRow['机构信用代码'] || excelRow.code || '',
@@ -191,12 +304,12 @@ class DataTransformer {
     };
   }
 
-  static transformRegistrationCountry(countryStr) {
+  static transformRegistrationCountry(countryStr?: string): string {
     if (!countryStr) return 'china';
     return countryStr.includes('国际') ? 'international' : 'china';
   }
 
-  static parseStaffCount(staffStr) {
+  static parseStaffCount(staffStr?: string | number): number {
     if (!staffStr) return 0;
 
     // extract numbers
@@ -206,8 +319,8 @@ class DataTransformer {
     }
 
     // handle range
-    if (staffStr.includes('-')) {
-      const range = staffStr.match(/(\d+)-(\d+)/);
+    if (staffStr.toString().includes('-')) {
+      const range = staffStr.toString().match(/(\d+)-(\d+)/);
       if (range) {
         return Math.floor((parseInt(range[1]) + parseInt(range[2])) / 2);
       }
@@ -216,7 +329,7 @@ class DataTransformer {
     return 0;
   }
 
-  static extractProvinceFromAddress(addressStr) {
+  static extractProvinceFromAddress(addressStr?: string): string {
     if (!addressStr) return '';
 
     // format: 北京市-市辖区-东城区-  or 甘肃省-兰州市-
@@ -228,7 +341,7 @@ class DataTransformer {
     return '';
   }
 
-  static extractCityFromAddress(addressStr) {
+  static extractCityFromAddress(addressStr?: string): string {
     if (!addressStr) return '';
 
     const parts = addressStr.split('-');
@@ -239,7 +352,7 @@ class DataTransformer {
     return '';
   }
 
-  static extractDistrictFromAddress(addressStr) {
+  static extractDistrictFromAddress(addressStr?: string): string {
     if (!addressStr) return '';
 
     const parts = addressStr.split('-');
@@ -250,7 +363,7 @@ class DataTransformer {
     return '';
   }
 
-  static extractCoverageFromDescription(description) {
+  static extractCoverageFromDescription(description?: string): string {
     if (!description) return '';
 
     // extract coverage area from description (simple implementation)
@@ -298,7 +411,7 @@ class DataTransformer {
     return '';
   }
 
-  static cleanDescription(description) {
+  static cleanDescription(description?: string): string {
     if (!description) return '';
 
     // clean description text, remove extra spaces and newlines
@@ -308,7 +421,7 @@ class DataTransformer {
       .substring(0, 2000); // limit length
   }
 
-  static parseDate(dateStr) {
+  static parseDate(dateStr?: string | number): string | null {
     if (!dateStr) return null;
 
     // 确保 dateStr 是字符串
@@ -376,8 +489,8 @@ class DataTransformer {
     }
   }
 
-  static transformServices(excelRow) {
-    const services = [];
+  static transformServices(excelRow: ExcelRow): Service[] {
+    const services: Service[] = [];
 
     // extract service information from various education related fields
     const educationFields = [
@@ -437,7 +550,7 @@ class DataTransformer {
     return services;
   }
 
-  static extractTargetGroups(excelRow) {
+  static extractTargetGroups(excelRow: ExcelRow): string {
     const targetFields = [
       '关于人群类服务对象早教',
       '关于人群类服务对象义务教育',
@@ -445,7 +558,7 @@ class DataTransformer {
       '关于人群类服务对象 对服务人群的支持方向',
     ];
 
-    const targets = [];
+    const targets: string[] = [];
     targetFields.forEach((field) => {
       if (excelRow[field]) {
         targets.push(excelRow[field]);
@@ -455,8 +568,8 @@ class DataTransformer {
     return targets.join('; ');
   }
 
-  static transformContacts(excelRow) {
-    const contact = {};
+  static transformContacts(excelRow: ExcelRow): InternetContact {
+    const contact: InternetContact = {};
 
     // 官网
     const website = excelRow['机构官网'] || excelRow.website;
@@ -479,8 +592,8 @@ class DataTransformer {
     return contact;
   }
 
-  static transformQualifications(excelRow) {
-    const qualifications = [];
+  static transformQualifications(excelRow: ExcelRow): Qualification[] {
+    const qualifications: Qualification[] = [];
 
     // Check for various qualification indicators in the data
     const qualificationIndicators = [
@@ -527,7 +640,10 @@ class DataTransformer {
 
 // Excel data reader
 class ExcelReader {
-  static readExcelFile(filePath, sheetName = null) {
+  static readExcelFile(
+    filePath: string,
+    sheetName: string | null = null,
+  ): ExcelRow[] {
     try {
       console.log(`读取 Excel 文件: ${filePath}`);
       const workbook = XLSX.readFile(filePath);
@@ -544,7 +660,7 @@ class ExcelReader {
       console.log(`使用工作表: ${targetSheet}`);
 
       const worksheet = workbook.Sheets[targetSheet];
-      const data = XLSX.utils.sheet_to_json(worksheet);
+      const data: ExcelRow[] = XLSX.utils.sheet_to_json(worksheet);
 
       console.log(`成功读取 ${data.length} 行数据`);
 
@@ -557,17 +673,17 @@ class ExcelReader {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('读取 Excel 文件失败:', error.message);
       throw error;
     }
   }
 
-  static getSheetNames(filePath) {
+  static getSheetNames(filePath: string): string[] {
     try {
       const workbook = XLSX.readFile(filePath);
       return workbook.SheetNames;
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取工作表名称失败:', error.message);
       throw error;
     }
@@ -576,6 +692,13 @@ class ExcelReader {
 
 // Logger class for tracking import results
 class ImportLogger {
+  private timestamp: string;
+  private logDir: string;
+  private failedFile: string;
+  private skippedFile: string;
+  public failedCount: number = 0;
+  public skippedCount: number = 0;
+
   constructor() {
     this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     this.logDir = 'logs';
@@ -587,8 +710,6 @@ class ImportLogger {
       this.logDir,
       `import-skipped-${this.timestamp}.log`,
     );
-    this.failedCount = 0;
-    this.skippedCount = 0;
 
     // Create logs directory if it doesn't exist
     if (!fs.existsSync(this.logDir)) {
@@ -599,7 +720,7 @@ class ImportLogger {
     this.initLogFiles();
   }
 
-  initLogFiles() {
+  private initLogFiles(): void {
     const header = `# Import Log - ${new Date().toISOString()}\n# Format: [timestamp] organization_name | error/reason\n\n`;
 
     fs.writeFileSync(this.failedFile, `# 失败记录\n${header}`);
@@ -610,9 +731,9 @@ class ImportLogger {
     console.log(`   跳过记录: ${this.skippedFile}`);
   }
 
-  logFailed(orgData, error) {
+  logFailed(orgData: OrganizationData, error: any): void {
     this.failedCount++;
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       organization: {
         name: orgData.name,
@@ -631,9 +752,9 @@ class ImportLogger {
     fs.appendFileSync(this.failedFile, logLine + detailLine);
   }
 
-  logSkipped(orgData, reason) {
+  logSkipped(orgData: OrganizationData, reason: string): void {
     this.skippedCount++;
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       organization: {
         name: orgData.name,
@@ -651,7 +772,7 @@ class ImportLogger {
     fs.appendFileSync(this.skippedFile, logLine + detailLine);
   }
 
-  saveToFiles() {
+  saveToFiles(): void {
     // Add summary to log files
     const summary = `\n# 导入完成统计 - ${new Date().toISOString()}\n`;
 
@@ -676,7 +797,7 @@ class ImportLogger {
     }
   }
 
-  getSummary() {
+  getSummary(): { failed: number; skipped: number } {
     return {
       failed: this.failedCount,
       skipped: this.skippedCount,
@@ -686,7 +807,11 @@ class ImportLogger {
 
 // data importer
 class DataImporter {
-  constructor(api) {
+  private api: StrapiAPI;
+  public logger: ImportLogger;
+  private stats: ImportStats;
+
+  constructor(api: StrapiAPI) {
     this.api = api;
     this.logger = new ImportLogger();
     this.stats = {
@@ -697,7 +822,7 @@ class DataImporter {
     };
   }
 
-  async importOrganizations(organizations) {
+  async importOrganizations(organizations: OrganizationData[]): Promise<void> {
     console.log(`开始导入 ${organizations.length} 个组织...`);
 
     for (let i = 0; i < organizations.length; i += CONFIG.BATCH_SIZE) {
@@ -718,12 +843,12 @@ class DataImporter {
     this.logger.saveToFiles();
   }
 
-  async processBatch(organizations) {
+  private async processBatch(organizations: OrganizationData[]): Promise<void> {
     const promises = organizations.map((org) => this.processOrganization(org));
     await Promise.allSettled(promises);
   }
 
-  async processOrganization(orgData) {
+  private async processOrganization(orgData: OrganizationData): Promise<void> {
     try {
       this.stats.total++;
 
@@ -748,18 +873,18 @@ class DataImporter {
       await this.api.createOrganization(orgData);
       console.log(`✓ 成功创建组织: ${orgData.name}`);
       this.stats.success++;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`✗ 创建组织失败: ${orgData.name}`, error.message);
       this.logger.logFailed(orgData, error);
       this.stats.failed++;
     }
   }
 
-  delay(ms) {
+  private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  printStats() {
+  private printStats(): void {
     console.log('\n=== 导入统计 ===');
     console.log(`总计: ${this.stats.total}`);
     console.log(`成功: ${this.stats.success}`);
@@ -770,11 +895,11 @@ class DataImporter {
 }
 
 // main function
-async function main() {
-  let importer = null;
+async function main(): Promise<void> {
+  let importer: DataImporter | null = null;
 
   // 处理进程信号，确保强制退出时保存日志
-  const handleExit = (signal) => {
+  const handleExit = (signal: string) => {
     console.log(`\n收到 ${signal} 信号，正在保存日志...`);
     if (importer && importer.logger) {
       importer.logger.saveToFiles();
@@ -783,9 +908,9 @@ async function main() {
     process.exit(0);
   };
 
-  process.on('SIGINT', handleExit); // Ctrl+C
-  process.on('SIGTERM', handleExit); // 终止信号
-  process.on('SIGQUIT', handleExit); // 退出信号
+  process.on('SIGINT', () => handleExit('SIGINT')); // Ctrl+C
+  process.on('SIGTERM', () => handleExit('SIGTERM')); // 终止信号
+  process.on('SIGQUIT', () => handleExit('SIGQUIT')); // 退出信号
 
   try {
     console.log('=== Strapi 数据导入工具 ===\n');
@@ -818,14 +943,14 @@ async function main() {
       .map((row) => {
         try {
           return DataTransformer.transformOrganization(row);
-        } catch (error) {
+        } catch (error: any) {
           const orgName = row['常用名称'] || row.name || 'Unknown';
           console.warn(`转换数据失败，跳过行: ${orgName}`, error.message);
           // 可选：记录转换失败的详细信息到日志
           return null;
         }
       })
-      .filter((org) => org && org.name); // filter out failed and without name organizations
+      .filter((org): org is OrganizationData => org !== null && !!org.name); // filter out failed and without name organizations
 
     console.log(`转换完成，准备导入 ${organizations.length} 个组织\n`);
 
@@ -847,14 +972,14 @@ async function main() {
     await importer.importOrganizations(organizations);
 
     console.log('导入完成！');
-  } catch (error) {
+  } catch (error: any) {
     console.error('导入失败:', error.message);
     process.exit(1);
   }
 }
 
 // handle command line arguments
-function parseArgs() {
+function parseArgs(): void {
   const args = process.argv.slice(2);
 
   if (args.includes('--help') || args.includes('-h')) {
@@ -862,7 +987,7 @@ function parseArgs() {
 Strapi 数据导入工具
 
 用法:
-  node scripts/import-data.js [选项]
+  tsx scripts/import-data.ts [选项]
 
 选项:
   --dry-run, -d     仅模拟导入，不实际创建数据
@@ -879,19 +1004,19 @@ Strapi 数据导入工具
 
 示例:
   # 正常导入
-  STRAPI_TOKEN=your_token node import-data.js
+  STRAPI_TOKEN=your_token tsx import-data.ts
   
   # 模拟导入
-  DRY_RUN=true node import-data.js
+  DRY_RUN=true tsx import-data.ts
   
   # 导入指定工作表
-  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token node import-data.js
+  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx import-data.ts
   
   # 导入前100行进行测试
-  MAX_ROWS=100 DRY_RUN=true node import-data.js
+  MAX_ROWS=100 DRY_RUN=true tsx import-data.ts
   
   # 使用自定义文件
-  EXCEL_FILE=data.xlsx STRAPI_TOKEN=your_token node import-data.js
+  EXCEL_FILE=data.xlsx STRAPI_TOKEN=your_token tsx import-data.ts
 `);
     process.exit(0);
   }
@@ -907,9 +1032,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = {
-  DataTransformer,
-  ExcelReader,
-  DataImporter,
-  StrapiAPI,
-};
+export { DataTransformer, ExcelReader, DataImporter, StrapiAPI };

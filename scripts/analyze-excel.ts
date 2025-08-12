@@ -1,5 +1,5 @@
-const XLSX = require('xlsx');
-const fs = require('fs');
+import * as XLSX from 'xlsx';
+import * as fs from 'node:fs';
 
 // check excel file
 const excelFile = '教育公益开放式数据库.xlsx';
@@ -53,12 +53,20 @@ try {
 
       // analyze data types
       console.log('\ndata types analysis:');
-      const typeAnalysis = {};
+      const typeAnalysis: Record<
+        string,
+        {
+          types: string[];
+          sampleCount: number;
+          totalCount: number;
+          samples: any[];
+        }
+      > = {};
       columns.forEach((col) => {
         const values = data
           .map((row) => row[col])
           .filter((v) => v !== undefined && v !== null && v !== '');
-        const types = [...new Set(values.map((v) => typeof v))];
+        const types = Array.from(new Set(values.map((v) => typeof v)));
         const sampleValues = values.slice(0, 3);
         typeAnalysis[col] = {
           types,

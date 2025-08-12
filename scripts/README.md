@@ -13,10 +13,11 @@
 
 ## 文件说明
 
-- `import-data.js` - 主要的数据导入脚本
-- `create-admin-user.js` - 创建管理员用户和 API Token 的工具脚本
-
+- `import-data.ts` - 主要的数据导入脚本 (TypeScript)
+- `analyze-excel.ts` - Excel 文件分析脚本 (TypeScript)
 - `README.md` - 使用说明文档
+
+**注意**: 所有脚本现在都使用 TypeScript 编写，通过 `tsx` 包执行。
 
 ## 快速开始
 
@@ -24,7 +25,7 @@
 
 ```bash
 # 在项目根目录安装所有依赖
-pnpm install
+npm install
 ```
 
 ### 2. 启动 Strapi 服务
@@ -36,7 +37,7 @@ pnpm install
 docker compose up
 
 # 或者直接运行 Strapi
-pnpm develop
+npm develop
 ```
 
 ### 3. 创建管理员用户和 API Token
@@ -102,22 +103,22 @@ Excel 文件应包含以下列（支持中英文列名）：
 
 ```bash
 # 分析Excel文件结构
-node analyze-excel.js
+tsx analyze-excel.ts
 
 # 干运行模式（推荐先测试）
-DRY_RUN=true node import-data.js
+DRY_RUN=true tsx import-data.ts
 
 # 测试模式（只导入前100行）
-MAX_ROWS=100 DRY_RUN=true node import-data.js
+MAX_ROWS=100 DRY_RUN=true tsx import-data.ts
 
 # 正式导入所有数据
-STRAPI_TOKEN=your_api_token node import-data.js
+STRAPI_TOKEN=your_api_token tsx import-data.ts
 
 # 导入甘肃省数据工作表
-SHEET_NAME=甘肃省 STRAPI_TOKEN=your_api_token node import-data.js
+SHEET_NAME=甘肃省 STRAPI_TOKEN=your_api_token tsx import-data.ts
 
 # 使用自定义配置
-EXCEL_FILE=my-data.xlsx STRAPI_TOKEN=your_api_token node import-data.js
+EXCEL_FILE=my-data.xlsx STRAPI_TOKEN=your_api_token tsx import-data.ts
 ```
 
 ## 配置选项
@@ -136,10 +137,10 @@ EXCEL_FILE=my-data.xlsx STRAPI_TOKEN=your_api_token node import-data.js
 
 ```bash
 # 显示帮助
-node import-data.js --help
+tsx import-data.ts --help
 
 # 干运行模式
-node import-data.js --dry-run
+tsx import-data.ts --dry-run
 ```
 
 ## 数据映射
@@ -187,7 +188,7 @@ node import-data.js --dry-run
    - 检查网络连接
 
 2. **API Token 无效**
-   - 重新运行 `node scripts/create-admin-user.js` 生成新的 Token
+   - 重新在 Strapi 管理界面生成新的 API Token
    - 检查 Token 是否正确设置
 
 3. **Excel 文件读取失败**
@@ -205,13 +206,13 @@ node import-data.js --dry-run
 1. **使用干运行模式**
 
    ```bash
-   DRY_RUN=true node import-data.js
+   DRY_RUN=true tsx import-data.ts
    ```
 
 2. **减少批次大小**
 
    ```bash
-   BATCH_SIZE=1 STRAPI_TOKEN=your_token node import-data.js
+   BATCH_SIZE=1 STRAPI_TOKEN=your_token tsx import-data.ts
    ```
 
 3. **查看详细错误信息**
