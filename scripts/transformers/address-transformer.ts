@@ -19,37 +19,12 @@ export class AddressTransformer {
     };
   };
 
-  static extractProvinceFromAddress(addressStr?: string): string {
-    if (!addressStr) return '';
+  static extractProvinceFromAddress = (addressStr = ``) =>
+    addressStr ? addressStr.split('-')[0].replace(/市$|省$/, '') : '';
 
-    // format: 北京市-市辖区-东城区-  or 甘肃省-兰州市-
-    const parts = addressStr.split('-');
-    if (parts.length > 0) {
-      return parts[0].replace(/市$|省$/, '');
-    }
+  static extractCityFromAddress = (addressStr = ``) =>
+    addressStr ? addressStr.split('-')[1].replace(/市$/, '') : '';
 
-    return '';
-  }
-
-  static extractCityFromAddress(addressStr?: string): string {
-    if (!addressStr) return '';
-
-    const parts = addressStr.split('-');
-    if (parts.length > 1) {
-      return parts[1].replace(/市$/, '');
-    }
-
-    return '';
-  }
-
-  static extractDistrictFromAddress(addressStr?: string): string {
-    if (!addressStr) return '';
-
-    const parts = addressStr.split('-');
-    if (parts.length > 2) {
-      return parts[2].replace(/区$|县$/, '');
-    }
-
-    return '';
-  }
+  static extractDistrictFromAddress = (addressStr = ``) =>
+    addressStr ? addressStr.split('-')[2].replace(/区$|县$/, '') : '';
 }
