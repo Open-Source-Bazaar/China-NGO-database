@@ -45,7 +45,11 @@ export interface InternetContact {
 
 // 资格认证接口
 export interface Qualification {
-  qualificationType: string;
+  qualificationType:
+    | 'no_special_qualification'
+    | 'tax_deduction_eligible'
+    | 'public_fundraising_qualified'
+    | 'tax_exempt_qualified';
   certificateName: string;
   issuingAuthority: string;
 }

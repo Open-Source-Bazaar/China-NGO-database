@@ -24,110 +24,19 @@ import {
   COUNTRIES,
 } from './constants';
 
-// Types
-interface Config {
-  STRAPI_URL: string;
-  STRAPI_TOKEN: string;
-  EXCEL_FILE: string;
-  SHEET_NAME: string | null;
-  BATCH_SIZE: number;
-  DRY_RUN: boolean;
-  MAX_ROWS: number;
-}
+import {
+  Config,
+  Address,
+  Service,
+  InternetContact,
+  Qualification,
+  OrganizationData,
+  ExcelRow,
+  ImportStats,
+  LogEntry,
+} from './types';
 
-interface Address {
-  country?: string;
-  province?: string;
-  city?: string;
-  district?: string;
-  street?: string;
-  building?: string;
-  floor?: string;
-  room?: string;
-}
-
-interface Service {
-  serviceCategory: string;
-  serviceContent: string;
-  serviceTargets: string;
-  supportMethods: string;
-  projectStatus: string;
-  servesAllPopulation: boolean;
-}
-
-interface InternetContact {
-  website?: string;
-  wechatPublic?: string;
-  weibo?: string;
-}
-
-interface Qualification {
-  qualificationType: string;
-  certificateName: string;
-  issuingAuthority: string;
-}
-
-interface OrganizationData {
-  name: string;
-  code?: string;
-  entityType: string;
-  registrationCountry: string;
-  establishedDate?: string | null;
-  coverageArea?: string;
-  description?: string;
-  staffCount?: number;
-  address?: Address;
-  services?: Service[];
-  internetContact?: InternetContact;
-  qualifications?: Qualification[];
-  publishedAt: string;
-}
-
-interface ExcelRow {
-  [key: string]: any;
-  常用名称?: string;
-  name?: string;
-  机构信用代码?: string;
-  code?: string;
-  实体类型?: string;
-  entityType?: string;
-  注册国籍?: string;
-  registrationCountry?: string;
-  成立时间?: string | number;
-  establishedDate?: string | number;
-  '机构／项目简介'?: string;
-  description?: string;
-  '机构／项目全职人数'?: string | number;
-  staffCount?: string | number;
-  注册地?: string;
-  具体地址?: string;
-  street?: string;
-  机构官网?: string;
-  website?: string;
-  机构微信公众号?: string;
-  机构微博?: string;
-  登记管理机关?: string;
-}
-
-interface ImportStats {
-  total: number;
-  success: number;
-  failed: number;
-  skipped: number;
-}
-
-interface LogEntry {
-  timestamp: string;
-  organization: {
-    name: string;
-    code?: string;
-    entityType: string;
-    registrationCountry: string;
-  };
-  error?: string;
-  errorDetails?: any;
-  reason?: string;
-}
+// Types imported from ./types
 
 // config
 const CONFIG: Config = {
@@ -533,7 +442,8 @@ class DataTransformer {
     // Check for various qualification indicators in the data
     for (const indicator of QUALIFICATION_INDICATORS) {
       if (excelRow[indicator]) {
-        let qualificationType = QUALIFICATION_TYPES.NO_SPECIAL;
+        let qualificationType: (typeof QUALIFICATION_TYPES)[keyof typeof QUALIFICATION_TYPES] =
+          QUALIFICATION_TYPES.NO_SPECIAL;
 
         if (indicator.includes('免税') || indicator.includes('税前扣除')) {
           qualificationType = QUALIFICATION_TYPES.TAX_DEDUCTION;
