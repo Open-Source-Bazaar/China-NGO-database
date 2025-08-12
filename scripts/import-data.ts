@@ -6,7 +6,6 @@
  */
 
 import * as XLSX from 'xlsx';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
@@ -49,77 +48,68 @@ const CONFIG: Config = {
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'), // 0 to import all rows
 };
 
-// API client
+// API client using native fetch
 class StrapiAPI {
-  private client: AxiosInstance;
+  private baseURL: string;
+  private token: string;
 
   constructor(baseURL: string, token: string) {
-    this.client = axios.create({
-      baseURL,
+    this.baseURL = baseURL;
+    this.token = token;
+  }
+
+  private async request(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<any> {
+    const url = `${this.baseURL}${endpoint}`;
+    const config: RequestInit = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${this.token}`,
         'Content-Type': 'application/json',
+        ...options.headers,
       },
-    });
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      console.error('API request failed:', error.message);
+      throw error;
+    }
   }
 
   async createOrganization(data: OrganizationData): Promise<any> {
-    try {
-      const response: AxiosResponse = await this.client.post(
-        '/api/organizations',
-        { data },
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        'create organization failed:',
-        error.response?.data || error.message,
-      );
-      throw error;
-    }
+    return this.request('/api/organizations', {
+      method: 'POST',
+      body: JSON.stringify({ data }),
+    });
   }
 
   async findOrganizationByName(name: string): Promise<any> {
-    try {
-      const response: AxiosResponse = await this.client.get(
-        `/api/organizations?filters[name][$eq]=${encodeURIComponent(name)}`,
-      );
-      return response.data.data[0] || null;
-    } catch (error: any) {
-      console.error(
-        'find organization failed:',
-        error.response?.data || error.message,
-      );
-      return null;
-    }
+    const response = await this.request(
+      `/api/organizations?filters[name][$eq]=${encodeURIComponent(name)}`,
+    );
+    return response.data?.[0] || null;
   }
 
   async createUser(data: any): Promise<any> {
-    try {
-      const response: AxiosResponse = await this.client.post(
-        '/api/users',
-        data,
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        'create user failed:',
-        error.response?.data || error.message,
-      );
-      throw error;
-    }
+    return this.request('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async findUserByEmail(email: string): Promise<any> {
-    try {
-      const response: AxiosResponse = await this.client.get(
-        `/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
-      );
-      return response.data[0] || null;
-    } catch (error: any) {
-      console.error('查找用户失败:', error.response?.data || error.message);
-      return null;
-    }
+    const response = await this.request(
+      `/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
+    );
+    return response[0] || null;
   }
 }
 
