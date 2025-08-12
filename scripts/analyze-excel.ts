@@ -70,7 +70,7 @@ try {
         const values = data
           .map((row) => row[col])
           .filter((v) => v !== undefined && v !== null && v !== '');
-        const types = Array.from(new Set(values.map((v) => typeof v)));
+        const types = [...new Set(values.map((v) => typeof v))];
         const sampleValues = values.slice(0, 3);
         typeAnalysis[col] = {
           types,
