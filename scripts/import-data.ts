@@ -33,7 +33,7 @@ async function main(): Promise<void> {
   // Handle process signals to ensure logs are saved on forced exit
   const handleExit = (signal: string) => {
     console.log(`\n收到 ${signal} 信号，正在保存日志...`);
-    if (importer && importer.logger) {
+    if (importer?.logger) {
       importer.logger.saveToFiles();
       console.log('日志已保存，程序退出。');
     }
@@ -89,9 +89,9 @@ async function main(): Promise<void> {
     // Show examples in dry run mode
     if (CONFIG.DRY_RUN) {
       console.log('=== DRY RUN 模式 ===');
-      organizations.slice(0, 3).forEach((org, index) => {
+      for (const [index, org] of organizations.slice(0, 3).entries()) {
         console.log(`示例 ${index + 1}:`, JSON.stringify(org, null, 2));
-      });
+      }
       console.log('==================\n');
     }
 
