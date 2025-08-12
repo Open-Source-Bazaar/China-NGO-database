@@ -28,17 +28,15 @@ export class DataUtils {
     countryStr.includes('国际') ? COUNTRIES.INTERNATIONAL : COUNTRIES.CHINA;
 
   static parseStaffCount(staffStr?: string | number): number {
-    if (!staffStr) return 0;
-
     // extract numbers
-    const match = staffStr.toString().match(/\d+/);
+    const match = staffStr?.toString().match(/\d+/);
     if (match) {
       return parseInt(match[0]);
     }
 
     // handle range
-    if (staffStr.toString().includes('-')) {
-      const range = staffStr.toString().match(/(\d+)-(\d+)/);
+    if (staffStr?.toString().includes('-')) {
+      const range = staffStr?.toString().match(/(\d+)-(\d+)/);
       if (range) {
         return Math.floor((parseInt(range[1]) + parseInt(range[2])) / 2);
       }
