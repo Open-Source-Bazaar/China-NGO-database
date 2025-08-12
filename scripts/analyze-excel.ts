@@ -29,12 +29,13 @@ try {
   const workbook = XLSX.readFile(excelFile);
 
   console.log(
-    `\n=== sheet info ===\nsheet count: ${workbook.SheetNames.length}\nsheet names: ${workbook.SheetNames.join(', ')}`,
+    `\n=== sheet info ===
+    sheet count: ${workbook.SheetNames.length}
+    sheet names: ${workbook.SheetNames.join(', ')}`,
   );
 
   // analyze each sheet
-  for (let index = 0; index < workbook.SheetNames.length; index++) {
-    const sheetName = workbook.SheetNames[index];
+  for (const [index, sheetName] of workbook.SheetNames.entries()) {
     console.log(`\n=== sheet ${index + 1}: ${sheetName} ===`);
 
     const worksheet = workbook.Sheets[sheetName];
@@ -51,13 +52,11 @@ try {
       }
 
       console.log('\nfirst 3 rows data example:');
-      for (let i = 0; i < Math.min(3, data.length); i++) {
-        const row = data[i];
-        console.log(`\nrow ${i + 1}:`);
+      for (const row of data.slice(0, 3)) {
         for (const [key, value] of Object.entries(row)) {
           const displayValue =
             typeof value === 'string' && value.length > 50
-              ? value.substring(0, 50) + '...'
+              ? value.slice(0, 50) + '...'
               : value;
           console.log(`  ${key}: ${displayValue}`);
         }
@@ -81,10 +80,12 @@ try {
       }
 
       for (const [col, info] of Object.entries(typeAnalysis)) {
-        console.log(`  ${col}:`);
-        console.log(`    types: ${info.types.join(', ')}`);
-        console.log(`    sample count: ${info.sampleCount}/${info.totalCount}`);
-        console.log(`    samples: ${info.samples.slice(0, 2).join(', ')}`);
+        console.log(
+          `  ${col}:  
+          types: ${info.types.join(', ')}
+          sample count: ${info.sampleCount}/${info.totalCount}
+          samples: ${info.samples.slice(0, 2).join(', ')}`,
+        );
       }
     }
   }
@@ -93,7 +94,7 @@ try {
 
   // try to install xlsx package
   if (error.message.includes('Cannot find module')) {
-    console.log('\nplease install xlsx package:');
-    console.log('npm install xlsx');
+    console.log(`please install xlsx package:
+                $ npm install xlsx`);
   }
 }
