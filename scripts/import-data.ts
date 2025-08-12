@@ -9,6 +9,20 @@ import * as XLSX from 'xlsx';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import {
+  ENTITY_TYPE_MAPPING,
+  SERVICE_CATEGORY_MAPPING,
+  EDUCATION_FIELDS,
+  TARGET_GROUP_FIELDS,
+  QUALIFICATION_INDICATORS,
+  COVERAGE_KEYWORDS,
+  DEFAULTS,
+  DATE_PATTERNS,
+  LOG_CONSTANTS,
+  SERVICE_STATUS,
+  QUALIFICATION_TYPES,
+  COUNTRIES,
+} from './constants';
 
 // Types
 interface Config {
@@ -202,11 +216,13 @@ class StrapiAPI {
 
 // 数据转换工具
 class DataTransformer {
-  static transformAddress(addressData?: Partial<Address>): Address | null {
+  static transformAddress = (
+    addressData?: Partial<Address>,
+  ): Address | null => {
     if (!addressData) return null;
 
     return {
-      country: addressData.country || '中国',
+      country: addressData.country || DEFAULTS.COUNTRY,
       province: addressData.province || '',
       city: addressData.city || '',
       district: addressData.district || '',
@@ -215,53 +231,26 @@ class DataTransformer {
       floor: addressData.floor || '',
       room: addressData.room || '',
     };
-  }
+  };
 
-  static transformEntityType(entityType?: string): string {
-    if (!entityType) return 'other';
-
-    const mapping: Record<string, string> = {
-      基金会: 'foundation',
-      '社会服务机构（民非/NGO）': 'ngo',
-      民办非企业单位: 'ngo',
-      社会团体: 'association',
-      企业: 'company',
-      政府机构: 'government',
-      学校: 'school',
-      其他: 'other',
-    };
+  static transformEntityType = (entityType?: string): string => {
+    if (!entityType) return ENTITY_TYPE_MAPPING.其他;
 
     // handle keyword cases
-    for (const [key, value] of Object.entries(mapping)) {
+    for (const [key, value] of Object.entries(ENTITY_TYPE_MAPPING)) {
       if (entityType.includes(key)) {
         return value;
       }
     }
 
-    return 'other';
-  }
+    return ENTITY_TYPE_MAPPING.其他;
+  };
 
-  static transformServiceCategory(category?: string): string {
-    const mapping: Record<string, string> = {
-      学前教育: 'early_education',
-      小学教育: 'primary_education',
-      中学教育: 'secondary_education',
-      高等教育: 'higher_education',
-      职业教育: 'vocational_education',
-      继续教育: 'continuing_education',
-      特殊教育: 'special_education',
-      社区教育: 'community_education',
-      政策研究: 'policy_research',
-      教师发展: 'teacher_development',
-      教育内容: 'educational_content',
-      教育硬件: 'educational_hardware',
-      学生支持: 'student_support',
-      扫盲项目: 'literacy_programs',
-      组织支持: 'organization_support',
-      其他: 'other',
-    };
-    return mapping[category || ''] || 'other';
-  }
+  static transformServiceCategory = (category?: string): string => {
+    return (
+      SERVICE_CATEGORY_MAPPING[category || ''] || SERVICE_CATEGORY_MAPPING.其他
+    );
+  };
 
   static transformOrganization(excelRow: ExcelRow): OrganizationData {
     return {
@@ -304,10 +293,8 @@ class DataTransformer {
     };
   }
 
-  static transformRegistrationCountry(countryStr?: string): string {
-    if (!countryStr) return 'china';
-    return countryStr.includes('国际') ? 'international' : 'china';
-  }
+  static transformRegistrationCountry = (countryStr = '') =>
+    countryStr.includes('国际') ? COUNTRIES.INTERNATIONAL : COUNTRIES.CHINA;
 
   static parseStaffCount(staffStr?: string | number): number {
     if (!staffStr) return 0;
@@ -363,53 +350,18 @@ class DataTransformer {
     return '';
   }
 
-  static extractCoverageFromDescription(description?: string): string {
+  static extractCoverageFromDescription = (description?: string): string => {
     if (!description) return '';
 
     // extract coverage area from description (simple implementation)
-    const keywords = [
-      '全国',
-      '北京',
-      '上海',
-      '广东',
-      '浙江',
-      '江苏',
-      '山东',
-      '河南',
-      '湖北',
-      '湖南',
-      '四川',
-      '重庆',
-      '陕西',
-      '甘肃',
-      '青海',
-      '西藏',
-      '新疆',
-      '内蒙古',
-      '黑龙江',
-      '吉林',
-      '辽宁',
-      '河北',
-      '山西',
-      '安徽',
-      '江西',
-      '福建',
-      '台湾',
-      '海南',
-      '广西',
-      '云南',
-      '贵州',
-      '宁夏',
-    ];
-
-    for (const keyword of keywords) {
+    for (const keyword of COVERAGE_KEYWORDS) {
       if (description.includes(keyword)) {
         return keyword;
       }
     }
 
     return '';
-  }
+  };
 
   static cleanDescription(description?: string): string {
     if (!description) return '';
@@ -489,84 +441,67 @@ class DataTransformer {
     }
   }
 
-  static transformServices(excelRow: ExcelRow): Service[] {
+  static transformServices = (excelRow: ExcelRow): Service[] => {
     const services: Service[] = [];
 
     // extract service information from various education related fields
-    const educationFields = [
-      '关于人群类服务对象早教',
-      '关于人群类服务对象义务教育',
-      '关于人群类服务对象高等教育',
-      '关于人群类服务对象 对服务人群的支持方向',
-      '教育专业／行业／平台发展与技术支持',
-      '特殊教育',
-      '支教',
-      '助学',
-      '成长多样化需求',
-    ];
-
-    educationFields.forEach((field) => {
+    for (const field of EDUCATION_FIELDS) {
       const value = excelRow[field];
       if (value) {
         // determine service category based on field type
-        let serviceCategory = 'other';
-        if (field.includes('早教')) serviceCategory = 'early_education';
+        let serviceCategory = SERVICE_CATEGORY_MAPPING.其他;
+        if (field.includes('早教'))
+          serviceCategory = SERVICE_CATEGORY_MAPPING.学前教育;
         else if (field.includes('义务教育'))
-          serviceCategory = 'primary_education';
+          serviceCategory = SERVICE_CATEGORY_MAPPING.小学教育;
         else if (field.includes('高等教育'))
-          serviceCategory = 'higher_education';
+          serviceCategory = SERVICE_CATEGORY_MAPPING.高等教育;
         else if (field.includes('特殊教育'))
-          serviceCategory = 'special_education';
+          serviceCategory = SERVICE_CATEGORY_MAPPING.特殊教育;
         else if (field.includes('支教'))
-          serviceCategory = 'teacher_development';
-        else if (field.includes('助学')) serviceCategory = 'student_support';
+          serviceCategory = SERVICE_CATEGORY_MAPPING.教师发展;
+        else if (field.includes('助学'))
+          serviceCategory = SERVICE_CATEGORY_MAPPING.学生支持;
         else if (field.includes('技术支持'))
-          serviceCategory = 'educational_hardware';
+          serviceCategory = SERVICE_CATEGORY_MAPPING.教育硬件;
 
         services.push({
           serviceCategory,
           serviceContent: value,
           serviceTargets: this.extractTargetGroups(excelRow),
           supportMethods: value,
-          projectStatus: 'ongoing',
+          projectStatus: SERVICE_STATUS.ONGOING,
           servesAllPopulation:
             excelRow['关于人群类服务对象服务全部人群'] === '是',
         });
       }
-    });
+    }
 
     // if no service information, create basic service based on industry service object
     if (services.length === 0 && excelRow[' 关于行业类服务对象']) {
       services.push({
-        serviceCategory: 'other',
+        serviceCategory: SERVICE_CATEGORY_MAPPING.其他,
         serviceContent: excelRow[' 关于行业类服务对象'],
         serviceTargets: excelRow[' 关于行业类服务对象'],
         supportMethods: '',
-        projectStatus: 'ongoing',
+        projectStatus: SERVICE_STATUS.ONGOING,
         servesAllPopulation: false,
       });
     }
 
     return services;
-  }
+  };
 
-  static extractTargetGroups(excelRow: ExcelRow): string {
-    const targetFields = [
-      '关于人群类服务对象早教',
-      '关于人群类服务对象义务教育',
-      '关于人群类服务对象高等教育',
-      '关于人群类服务对象 对服务人群的支持方向',
-    ];
-
+  static extractTargetGroups = (excelRow: ExcelRow): string => {
     const targets: string[] = [];
-    targetFields.forEach((field) => {
+    for (const field of TARGET_GROUP_FIELDS) {
       if (excelRow[field]) {
         targets.push(excelRow[field]);
       }
-    });
+    }
 
     return targets.join('; ');
-  }
+  };
 
   static transformContacts(excelRow: ExcelRow): InternetContact {
     const contact: InternetContact = {};
@@ -592,29 +527,20 @@ class DataTransformer {
     return contact;
   }
 
-  static transformQualifications(excelRow: ExcelRow): Qualification[] {
+  static transformQualifications = (excelRow: ExcelRow): Qualification[] => {
     const qualifications: Qualification[] = [];
 
     // Check for various qualification indicators in the data
-    const qualificationIndicators = [
-      '免税资格',
-      '税前扣除资格',
-      '公开募捐资格',
-      '公益性捐赠税前扣除资格',
-      '慈善组织认定',
-      '社会组织评估等级',
-    ];
-
-    qualificationIndicators.forEach((indicator) => {
+    for (const indicator of QUALIFICATION_INDICATORS) {
       if (excelRow[indicator]) {
-        let qualificationType = 'no_special_qualification';
+        let qualificationType = QUALIFICATION_TYPES.NO_SPECIAL;
 
         if (indicator.includes('免税') || indicator.includes('税前扣除')) {
-          qualificationType = 'tax_deduction_eligible';
+          qualificationType = QUALIFICATION_TYPES.TAX_DEDUCTION;
         } else if (indicator.includes('公开募捐')) {
-          qualificationType = 'public_fundraising_qualified';
+          qualificationType = QUALIFICATION_TYPES.PUBLIC_FUNDRAISING;
         } else if (indicator.includes('慈善组织')) {
-          qualificationType = 'tax_exempt_qualified';
+          qualificationType = QUALIFICATION_TYPES.TAX_EXEMPT;
         }
 
         qualifications.push({
@@ -623,19 +549,19 @@ class DataTransformer {
           issuingAuthority: '相关主管部门',
         });
       }
-    });
+    }
 
     // Add general qualification if organization has any legal status
     if (excelRow['登记管理机关'] && qualifications.length === 0) {
       qualifications.push({
-        qualificationType: 'no_special_qualification',
+        qualificationType: QUALIFICATION_TYPES.NO_SPECIAL,
         certificateName: '社会组织登记证书',
         issuingAuthority: excelRow['登记管理机关'],
       });
     }
 
     return qualifications;
-  }
+  };
 }
 
 // Excel data reader
@@ -701,14 +627,14 @@ class ImportLogger {
 
   constructor() {
     this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    this.logDir = 'logs';
+    this.logDir = LOG_CONSTANTS.LOG_DIR;
     this.failedFile = path.join(
       this.logDir,
-      `import-failed-${this.timestamp}.log`,
+      `${LOG_CONSTANTS.FAILED_LOG_PREFIX}${this.timestamp}.log`,
     );
     this.skippedFile = path.join(
       this.logDir,
-      `import-skipped-${this.timestamp}.log`,
+      `${LOG_CONSTANTS.SKIPPED_LOG_PREFIX}${this.timestamp}.log`,
     );
 
     // Create logs directory if it doesn't exist
@@ -721,7 +647,10 @@ class ImportLogger {
   }
 
   private initLogFiles(): void {
-    const header = `# Import Log - ${new Date().toISOString()}\n# Format: [timestamp] organization_name | error/reason\n\n`;
+    const header = LOG_CONSTANTS.HEADER_TEMPLATE.replace(
+      '{timestamp}',
+      new Date().toISOString(),
+    );
 
     fs.writeFileSync(this.failedFile, `# 失败记录\n${header}`);
     fs.writeFileSync(this.skippedFile, `# 跳过记录\n${header}`);
@@ -774,7 +703,10 @@ class ImportLogger {
 
   saveToFiles(): void {
     // Add summary to log files
-    const summary = `\n# 导入完成统计 - ${new Date().toISOString()}\n`;
+    const summary = LOG_CONSTANTS.SUMMARY_TEMPLATE.replace(
+      '{timestamp}',
+      new Date().toISOString(),
+    );
 
     if (this.failedCount > 0) {
       fs.appendFileSync(
