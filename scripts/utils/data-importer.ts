@@ -80,16 +80,15 @@ export class DataImporter {
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  private delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   private printStats(): void {
-    console.log('\n=== 导入统计 ===');
-    console.log(`总计: ${this.stats.total}`);
-    console.log(`成功: ${this.stats.success}`);
-    console.log(`失败: ${this.stats.failed}`);
-    console.log(`跳过: ${this.stats.skipped}`);
-    console.log('================\n');
+    console.log(`\n=== 导入统计 ===
+                总计: ${this.stats.total}
+                成功: ${this.stats.success}
+                失败: ${this.stats.failed}
+                跳过: ${this.stats.skipped}
+                 ================\n`);
   }
 }
