@@ -71,6 +71,20 @@ export interface OrganizationData {
   publishedAt: string;
 }
 
+// 用户数据接口
+export interface UserData {
+  username: string;
+  email: string;
+  password: string;
+  mobilePhone?: string;
+  phone?: string;
+  position?: string;
+  address?: Address;
+  internetContact?: InternetContact;
+  qualifications?: Qualification[];
+  publishedAt: string;
+}
+
 // Excel行数据接口
 export interface Organization {
   常用名称?: string;
