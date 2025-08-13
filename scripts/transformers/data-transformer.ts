@@ -9,17 +9,23 @@ export class DataTransformer {
   static transformOrganization = (
     organization: Organization,
   ): OrganizationData => ({
-    name: organization.name || '',
-    code: organization.code || '',
-    entityType: DataUtils.transformEntityType(organization.entityType),
+    name: organization['常用名称'] || organization.name || '',
+    code: organization['机构信用代码'] || organization.code || '',
+    entityType: DataUtils.transformEntityType(
+      organization['实体类型'] || organization.entityType,
+    ),
     registrationCountry: DataUtils.transformRegistrationCountry(
-      organization.registrationCountry,
+      organization['注册国籍'] || organization.registrationCountry,
     ),
-    establishedDate: DateTransformer.parseDate(organization.establishedDate),
+    establishedDate: DateTransformer.parseDate(
+      organization['成立时间'] || organization.establishedDate,
+    ),
     coverageArea: ServiceTransformer.extractCoverageFromDescription(
-      organization.description,
+      organization['机构／项目简介'] || organization.description,
     ),
-    description: DataUtils.cleanDescription(organization.description || ''),
+    description: DataUtils.cleanDescription(
+      organization['机构／项目简介'] || organization.description || '',
+    ),
     staffCount: DataUtils.parseStaffCount(
       organization['机构／项目全职人数'] || organization.staffCount,
     ),
