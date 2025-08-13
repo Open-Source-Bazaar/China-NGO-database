@@ -98,7 +98,7 @@ export interface Organization {
 }
 
 // 导入统计接口
-export interface ImportStats {
+export interface ImportStats extends Record<string, number> {
   total: number;
   success: number;
   failed: number;
