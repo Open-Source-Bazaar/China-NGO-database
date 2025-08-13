@@ -25,7 +25,7 @@
 
 ```bash
 # 在项目根目录安装所有依赖
-npm install
+pnpm install
 ```
 
 ### 2. 启动 Strapi 服务
@@ -37,7 +37,7 @@ npm install
 docker compose up
 
 # 或者直接运行 Strapi
-npm develop
+pnpm develop
 ```
 
 ### 3. 创建管理员用户和 API Token
