@@ -108,12 +108,10 @@ export interface ImportStats {
 // 日志条目接口
 export interface LogEntry {
   timestamp: string;
-  organization: {
-    name: string;
-    code?: string;
-    entityType: string;
-    registrationCountry: string;
-  };
+  organization: Pick<
+    OrganizationData,
+    'name' | 'code' | 'entityType' | 'registrationCountry'
+  >;
   error?: string;
   errorDetails?: any;
   reason?: string;
