@@ -32,13 +32,15 @@
     "@types/react-dom": "^18.3.7",
     "get-git-folder": "^0.1.2",
     "husky": "^9.1.7",
+    "koajax": "^3.1.2",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "swagger-typescript-api": "^13.2.7",
     "tsx": "^4.20.3",
     "typescript": "~5.8.3",
-    "zx": "^8.7.1",
-    "xlsx": "^0.18.5"
+    "web-utility": "^4.5.1",
+    "xlsx": "^0.18.5",
+    "zx": "^8.7.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -2,12 +2,8 @@ import { Address } from '../types';
 import { DEFAULTS } from '../constants';
 
 export class AddressTransformer {
-  static transformAddress = (
-    addressData?: Partial<Address>,
-  ): Address | null => {
-    if (!addressData) return null;
-
-    return {
+  static transformAddress = (addressData?: Partial<Address>) =>
+    addressData && {
       country: addressData.country || DEFAULTS.COUNTRY,
       province: addressData.province || '',
       city: addressData.city || '',
@@ -17,23 +13,13 @@ export class AddressTransformer {
       floor: addressData.floor || '',
       room: addressData.room || '',
     };
-  };
 
-  static extractProvinceFromAddress = (addressStr = '') => {
-    if (!addressStr) return '';
-    const parts = addressStr.split('-');
-    return parts[0] ? parts[0].replace(/市$|省$/, '') : '';
-  };
+  static extractProvinceFromAddress = (addressStr = '') =>
+    addressStr?.split('-')[0]?.replace(/市$|省$/, '') || '';
 
-  static extractCityFromAddress = (addressStr = '') => {
-    if (!addressStr) return '';
-    const parts = addressStr.split('-');
-    return parts[1] ? parts[1].replace(/市$/, '') : '';
-  };
+  static extractCityFromAddress = (addressStr = '') =>
+    addressStr?.split('-')[1]?.replace(/市$/, '') || '';
 
-  static extractDistrictFromAddress = (addressStr = '') => {
-    if (!addressStr) return '';
-    const parts = addressStr.split('-');
-    return parts[2] ? parts[2].replace(/区$|县$/, '') : '';
-  };
+  static extractDistrictFromAddress = (addressStr = '') =>
+    addressStr?.split('-')[2]?.replace(/区$|县$/, '') || '';
 }

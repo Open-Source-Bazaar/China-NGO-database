@@ -61,45 +61,39 @@ export class ServiceTransformer {
     return services;
   };
 
-  static extractTargetGroups = (organization: Organization): string => {
-    return TARGET_GROUP_FIELDS.filter((field) => organization[field])
-      .map((field) => organization[field])
+  static extractTargetGroups = (organization: Organization) =>
+    TARGET_GROUP_FIELDS.map((field) => organization[field])
+      .filter(Boolean)
       .join('; ');
-  };
 
   static transformContacts(organization: Organization): InternetContact {
     const contact: InternetContact = {};
 
     // 官网
-    const website = organization['机构官网'] || organization.website;
-    if (website) {
-      contact.website = website;
-    }
+    const website =
+      organization['机构官网'] || organization.internetContact.website;
+
+    if (website) contact.website = website;
 
     // 微信公众号
     const wechat = organization['机构微信公众号'];
-    if (wechat) {
-      contact.wechatPublic = wechat;
-    }
+
+    if (wechat) contact.wechatPublic = wechat;
 
     // 微博
     const weibo = organization['机构微博'];
-    if (weibo) {
-      contact.weibo = weibo;
-    }
+
+    if (weibo) contact.weibo = weibo;
 
     return contact;
   }
 
-  static extractCoverageFromDescription = (description?: string): string => {
+  static extractCoverageFromDescription = (description = '') => {
     if (!description) return '';
 
     // extract coverage area from description (simple implementation)
-    for (const keyword of COVERAGE_KEYWORDS) {
-      if (description.includes(keyword)) {
-        return keyword;
-      }
-    }
+    for (const keyword of COVERAGE_KEYWORDS)
+      if (description.includes(keyword)) return keyword;
 
     return '';
   };

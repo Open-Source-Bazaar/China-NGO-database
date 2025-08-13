@@ -14,98 +14,30 @@ export interface Config {
   MAX_ROWS: number;
 }
 
-// 地址接口
-export interface Address {
-  country?: string;
-  province?: string;
-  city?: string;
-  district?: string;
-  street?: string;
-  building?: string;
-  floor?: string;
-  room?: string;
-}
-
-// 服务接口
-export interface Service {
-  serviceCategory: string;
-  serviceContent: string;
-  serviceTargets: string;
-  supportMethods: string;
-  projectStatus: string;
-  servesAllPopulation: boolean;
-}
-
-// 网络联系方式接口
-export interface InternetContact {
-  website?: string;
-  wechatPublic?: string;
-  weibo?: string;
-}
-
-// 资格认证接口
-export interface Qualification {
-  qualificationType:
-    | 'no_special_qualification'
-    | 'tax_deduction_eligible'
-    | 'public_fundraising_qualified'
-    | 'tax_exempt_qualified';
-  certificateName: string;
-  issuingAuthority: string;
-}
+export {
+  LocationAddressComponent as Address,
+  ServiceOrganizationServiceComponent as Service,
+  ContactInternetContactComponent as InternetContact,
+  QualificationCertificateComponent as Qualification,
+  Organization as OrganizationData,
+  UsersPermissionsUser as UserData,
+} from '../types';
 
 // 组织数据接口
-export interface OrganizationData {
-  name: string;
-  code?: string;
-  entityType: string;
-  registrationCountry: string;
-  establishedDate?: string | null;
-  coverageArea?: string;
-  description?: string;
-  staffCount?: number;
-  address?: Address;
-  services?: Service[];
-  internetContact?: InternetContact;
-  qualifications?: Qualification[];
-  publishedAt: string;
-}
-
-// 用户数据接口
-export interface UserData {
-  username: string;
-  email: string;
-  password: string;
-  mobilePhone?: string;
-  phone?: string;
-  position?: string;
-  address?: Address;
-  internetContact?: InternetContact;
-  qualifications?: Qualification[];
-  publishedAt: string;
-}
+type OrganizationData = import('../types').Organization;
 
 // Excel行数据接口
-export interface Organization {
+export interface Organization extends Partial<import('../types').Organization> {
   常用名称?: string;
-  name?: string;
   机构信用代码?: string;
-  code?: string;
   实体类型?: string;
-  entityType?: string;
   注册国籍?: string;
-  registrationCountry?: string;
   成立时间?: string | number;
-  establishedDate?: string | number;
   '机构／项目简介'?: string;
-  description?: string;
   '机构／项目全职人数'?: string | number;
-  staffCount?: string | number;
   注册地?: string;
   具体地址?: string;
-  street?: string;
   机构官网?: string;
-  website?: string;
   机构微信公众号?: string;
   机构微博?: string;
   登记管理机关?: string;

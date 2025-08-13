@@ -5,20 +5,17 @@ import {
 } from '../constants';
 
 export class DataUtils {
-  static transformEntityType = (entityType?: string): string => {
+  static transformEntityType = (entityType?: string) => {
     if (!entityType) return ENTITY_TYPE_MAPPING.其他;
 
     // handle keyword cases
-    for (const [key, value] of Object.entries(ENTITY_TYPE_MAPPING)) {
-      if (entityType.includes(key)) {
-        return value;
-      }
-    }
+    for (const [key, value] of Object.entries(ENTITY_TYPE_MAPPING))
+      if (entityType.includes(key)) return value;
 
     return ENTITY_TYPE_MAPPING.其他;
   };
 
-  static transformServiceCategory = (category?: string): string =>
+  static transformServiceCategory = (category = '') =>
     SERVICE_CATEGORY_MAPPING[category || ''] || SERVICE_CATEGORY_MAPPING.其他;
 
   static transformRegistrationCountry = (countryStr = '') =>
@@ -35,5 +32,5 @@ export class DataUtils {
   }
 
   static cleanDescription = (description = '') =>
-    description?.replace(/\s+/g, ' ').trim().substring(0, 2000) || '';
+    description?.replace(/\s+/g, ' ').trim().slice(0, 2000) || '';
 }

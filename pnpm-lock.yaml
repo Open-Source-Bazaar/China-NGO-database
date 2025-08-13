@@ -72,15 +72,15 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.23)
-      axios:
-        specifier: ^1.6.0
-        version: 1.8.4(debug@4.3.4)
       get-git-folder:
         specifier: ^0.1.2
         version: 0.1.2(@types/node@22.16.5)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      koajax:
+        specifier: ^3.1.2
+        version: 3.1.2(typescript@5.8.3)
       lint-staged:
         specifier: ^16.1.2
         version: 16.1.2
@@ -96,6 +96,9 @@ importers:
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
+      web-utility:
+        specifier: ^4.5.1
+        version: 4.5.1(typescript@5.8.3)
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
@@ -4441,6 +4444,12 @@ packages:
     resolution: {integrity: sha512-umfX9d3iuSxTQP4pnzLOz0HKnPg0FaUUIKcye2lOiz3KPu1Y3M3xlz76dISdFPQs37P9eJz1wUpcTS6KDPn9fA==}
     engines: {node: ^4.8.4 || ^6.10.1 || ^7.10.1 || >= 8.1.4}
 
+  koajax@3.1.2:
+    resolution: {integrity: sha512-4dFDSc5/931hCtSoycuN/5Ke2GGhfRBRTvvDvwva/ruEayQuGH1VsqcT69y1nLtGit5Scbjxh5Y7rCnN3M5Zdw==}
+    peerDependencies:
+      core-js: '>=3'
+      jsdom: '>=21'
+
   kuler@2.0.0:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
 
@@ -5806,6 +5815,9 @@ packages:
   reftools@1.1.9:
     resolution: {integrity: sha512-OVede/NQE13xBQ+ob5CKd5KyeJYU2YInb1bmV4nRoOfquZPkAkxuOXicSe1PvqIuZZ4kD13sPKBbR7UFDmli6w==}
 
+  regenerator-runtime@0.14.1:
+    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
+
   registry-auth-token@4.2.2:
     resolution: {integrity: sha512-PC5ZysNb42zpFME6D/XlIgtNGdTl8bBOCw90xQLVMpzuuubJKYDWFAEuUNc+Cn8Z8724tg2SDhDRrkVEsqfDMg==}
     engines: {node: '>=6.0.0'}
@@ -6781,6 +6793,16 @@ packages:
   web-streams-polyfill@3.3.3:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
+
+  web-streams-polyfill@4.1.0:
+    resolution: {integrity: sha512-A7Jxrg7+eV+eZR/CIdESDnRGFb6/bcKukGvJBB5snI6cw3is1c2qamkYstC1bY1p08TyMRlN9eTMkxmnKJBPBw==}
+    engines: {node: '>= 8'}
+
+  web-utility@4.5.1:
+    resolution: {integrity: sha512-Yy9m6GiYKFLbqHVYbH8S/c3bSJUs5iv0XVCWYjZp/lANOuAQX28+bief7UHY4MLdaZuMBmHs4MqrwxfS8bcvRQ==}
+    peerDependencies:
+      element-internals-polyfill: '>=1'
+      typescript: '>=4.1'
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -12415,6 +12437,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  koajax@3.1.2(typescript@5.8.3):
+    dependencies:
+      '@swc/helpers': 0.5.17
+      regenerator-runtime: 0.14.1
+      web-streams-polyfill: 4.1.0
+      web-utility: 4.5.1(typescript@5.8.3)
+    transitivePeerDependencies:
+      - element-internals-polyfill
+      - typescript
+
   kuler@2.0.0: {}
 
   leaflet@1.9.4: {}
@@ -13803,6 +13835,8 @@ snapshots:
 
   reftools@1.1.9: {}
 
+  regenerator-runtime@0.14.1: {}
+
   registry-auth-token@4.2.2:
     dependencies:
       rc: 1.2.8
@@ -14845,6 +14879,14 @@ snapshots:
       defaults: 1.0.4
 
   web-streams-polyfill@3.3.3: {}
+
+  web-streams-polyfill@4.1.0: {}
+
+  web-utility@4.5.1(typescript@5.8.3):
+    dependencies:
+      '@swc/helpers': 0.5.17
+      regenerator-runtime: 0.14.1
+      typescript: 5.8.3
 
   webidl-conversions@3.0.1: {}
 

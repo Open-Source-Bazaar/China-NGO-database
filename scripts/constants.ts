@@ -3,36 +3,59 @@
  * 集中管理所有静态常量和映射关系
  */
 
+import {
+  OrganizationEntityTypeEnum,
+  OrganizationRegistrationCountryEnum,
+  QualificationCertificateComponentQualificationTypeEnum,
+  ServiceOrganizationServiceComponentProjectStatusEnum,
+  ServiceOrganizationServiceComponentServiceCategoryEnum,
+} from '../types';
+
 // 实体类型映射
-export const ENTITY_TYPE_MAPPING: Record<string, string> = {
-  基金会: 'foundation',
-  '社会服务机构（民非/NGO）': 'ngo',
-  民办非企业单位: 'ngo',
-  社会团体: 'association',
-  企业: 'company',
-  政府机构: 'government',
-  学校: 'school',
-  其他: 'other',
+export const ENTITY_TYPE_MAPPING: Record<string, OrganizationEntityTypeEnum> = {
+  基金会: OrganizationEntityTypeEnum.Foundation,
+  '社会服务机构（民非/NGO）': OrganizationEntityTypeEnum.Ngo,
+  民办非企业单位: OrganizationEntityTypeEnum.Ngo,
+  社会团体: OrganizationEntityTypeEnum.Association,
+  企业: OrganizationEntityTypeEnum.Company,
+  政府机构: OrganizationEntityTypeEnum.Government,
+  学校: OrganizationEntityTypeEnum.School,
+  其他: OrganizationEntityTypeEnum.Other,
 };
 
 // 服务类别映射
-export const SERVICE_CATEGORY_MAPPING: Record<string, string> = {
-  学前教育: 'early_education',
-  小学教育: 'primary_education',
-  中学教育: 'secondary_education',
-  高等教育: 'higher_education',
-  职业教育: 'vocational_education',
-  继续教育: 'continuing_education',
-  特殊教育: 'special_education',
-  社区教育: 'community_education',
-  政策研究: 'policy_research',
-  教师发展: 'teacher_development',
-  教育内容: 'educational_content',
-  教育硬件: 'educational_hardware',
-  学生支持: 'student_support',
-  扫盲项目: 'literacy_programs',
-  组织支持: 'organization_support',
-  其他: 'other',
+export const SERVICE_CATEGORY_MAPPING = {
+  学前教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.EarlyEducation,
+  小学教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.PrimaryEducation,
+  中学教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.SecondaryEducation,
+  高等教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.HigherEducation,
+  职业教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.VocationalEducation,
+  继续教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.ContinuingEducation,
+  特殊教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.SpecialEducation,
+  社区教育:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.CommunityEducation,
+  政策研究:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.PolicyResearch,
+  教师发展:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.TeacherDevelopment,
+  教育内容:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.EducationalContent,
+  教育硬件:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.EducationalHardware,
+  学生支持:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.StudentSupport,
+  扫盲项目:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.LiteracyPrograms,
+  组织支持:
+    ServiceOrganizationServiceComponentServiceCategoryEnum.OrganizationSupport,
+  其他: ServiceOrganizationServiceComponentServiceCategoryEnum.Other,
 };
 
 // 教育相关字段列表
@@ -123,9 +146,13 @@ export const DATE_PATTERNS = {
 
 // 日志相关常量
 export const LOG_CONSTANTS = {
-  HEADER_TEMPLATE:
-    '# Import Log - {timestamp}\n# Format: [timestamp] organization_name | error/reason\n\n',
-  SUMMARY_TEMPLATE: '\n# 导入完成统计 - {timestamp}\n',
+  HEADER_TEMPLATE: `# Import Log - {timestamp}
+# Format: [timestamp] organization_name | error/reason
+
+`,
+  SUMMARY_TEMPLATE: `
+# 导入完成统计 - {timestamp}
+`,
   FAILED_LOG_PREFIX: 'import-failed-',
   SKIPPED_LOG_PREFIX: 'import-skipped-',
   LOG_DIR: 'logs',
@@ -133,24 +160,27 @@ export const LOG_CONSTANTS = {
 
 // 服务状态常量
 export const SERVICE_STATUS = {
-  ONGOING: 'ongoing',
-  COMPLETED: 'completed',
-  PLANNED: 'planned',
+  ONGOING: ServiceOrganizationServiceComponentProjectStatusEnum.Ongoing,
+  COMPLETED: ServiceOrganizationServiceComponentProjectStatusEnum.Completed,
 } as const;
 
 // 资格类型常量
 export const QUALIFICATION_TYPES = {
-  NO_SPECIAL: 'no_special_qualification',
-  TAX_DEDUCTION: 'tax_deduction_eligible',
-  PUBLIC_FUNDRAISING: 'public_fundraising_qualified',
-  TAX_EXEMPT: 'tax_exempt_qualified',
+  NO_SPECIAL:
+    QualificationCertificateComponentQualificationTypeEnum.NoSpecialQualification,
+  TAX_DEDUCTION:
+    QualificationCertificateComponentQualificationTypeEnum.TaxDeductionEligible,
+  PUBLIC_FUNDRAISING:
+    QualificationCertificateComponentQualificationTypeEnum.PublicFundraisingQualified,
+  TAX_EXEMPT:
+    QualificationCertificateComponentQualificationTypeEnum.TaxExemptQualified,
 } as const;
 
 // 国家相关常量
 export const COUNTRIES = {
-  CHINA: 'china',
-  INTERNATIONAL: 'international',
-} as const;
+  CHINA: OrganizationRegistrationCountryEnum.China,
+  INTERNATIONAL: OrganizationRegistrationCountryEnum.International,
+};
 
 // 通用字符串常量
 export const COMMON_STRINGS = {

@@ -26,6 +26,8 @@
 ```bash
 # 在项目根目录安装所有依赖
 pnpm install
+# 生成 TS 类型定义文件
+pnpm build-type
 ```
 
 ### 2. 启动 Strapi 服务
@@ -44,11 +46,7 @@ pnpm develop
 
 如果你已经有管理员账户，可以通过以下步骤在 Strapi 管理界面中创建 API Token：
 
-1. **登录 Strapi 管理界面**
-
-   ```
-   http://localhost:1337/admin
-   ```
+1. **登录 Strapi 管理界面**：http://localhost:1337/admin
 
 2. **进入 API Tokens 设置**
    - 点击左侧菜单的 `Settings`（设置）
