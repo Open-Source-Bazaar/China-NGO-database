@@ -28,25 +28,27 @@ export class ImportLogger {
       fs.mkdirSync(this.logDir, { recursive: true });
     }
 
-    // Initialize log files with headers
-    this.initLogFiles();
+    // Initialize log files with headers (async)
+    this.initLogFiles().catch((error) => {
+      console.error('初始化日志文件失败:', error);
+    });
   }
 
-  private initLogFiles(): void {
+  private async initLogFiles(): Promise<void> {
     const header = LOG_CONSTANTS.HEADER_TEMPLATE.replace(
       '{timestamp}',
       new Date().toISOString(),
     );
 
-    fs.writeFileSync(this.failedFile, `# 失败记录\n${header}`);
-    fs.writeFileSync(this.skippedFile, `# 跳过记录\n${header}`);
+    await fs.promises.writeFile(this.failedFile, `# 失败记录\n${header}`);
+    await fs.promises.writeFile(this.skippedFile, `# 跳过记录\n${header}`);
 
     console.log(`📝 日志文件已初始化:`);
     console.log(`   失败记录: ${this.failedFile}`);
     console.log(`   跳过记录: ${this.skippedFile}`);
   }
 
-  logFailed(orgData: OrganizationData, error: any): void {
+  async logFailed(orgData: OrganizationData, error: any): Promise<void> {
     this.failedCount++;
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -64,10 +66,10 @@ export class ImportLogger {
     const logLine = `[${logEntry.timestamp}] ${orgData.name} | ${error.message}\n`;
     const detailLine = `   详细错误: ${JSON.stringify(logEntry.errorDetails, null, 2).replace(/\n/g, '\n   ')}\n\n`;
 
-    fs.appendFileSync(this.failedFile, logLine + detailLine);
+    await fs.promises.appendFile(this.failedFile, logLine + detailLine);
   }
 
-  logSkipped(orgData: OrganizationData, reason: string): void {
+  async logSkipped(orgData: OrganizationData, reason: string): Promise<void> {
     this.skippedCount++;
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -84,10 +86,10 @@ export class ImportLogger {
     const logLine = `[${logEntry.timestamp}] ${orgData.name} | ${reason}\n`;
     const detailLine = `   详细信息: ${JSON.stringify(logEntry.organization, null, 2).replace(/\n/g, '\n   ')}\n\n`;
 
-    fs.appendFileSync(this.skippedFile, logLine + detailLine);
+    await fs.promises.appendFile(this.skippedFile, logLine + detailLine);
   }
 
-  saveToFiles(): void {
+  async saveToFiles(): Promise<void> {
     // Add summary to log files
     const summary = LOG_CONSTANTS.SUMMARY_TEMPLATE.replace(
       '{timestamp}',
@@ -95,7 +97,7 @@ export class ImportLogger {
     );
 
     if (this.failedCount > 0) {
-      fs.appendFileSync(
+      await fs.promises.appendFile(
         this.failedFile,
         `${summary}# 总失败数: ${this.failedCount}\n`,
       );
@@ -105,7 +107,7 @@ export class ImportLogger {
     }
 
     if (this.skippedCount > 0) {
-      fs.appendFileSync(
+      await fs.promises.appendFile(
         this.skippedFile,
         `${summary}# 总跳过数: ${this.skippedCount}\n`,
       );
