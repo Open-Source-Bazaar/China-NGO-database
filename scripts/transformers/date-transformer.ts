@@ -32,30 +32,11 @@ export class DateTransformer {
     }
 
     // handle chinese date format: 2015年6月3日
-    const chineseMatch = dateString.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-    if (chineseMatch) {
-      const [, year, month, day] = chineseMatch;
+    const [, year, , , month = '1', , day = '1'] =
+      dateString.match(/(\d{4})(年((\d{1,2})月((\d{1,2})日)?)?)?/) || [];
+
+    if (year)
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // handle year-month format: 2011年5月
-    const yearMonthMatch = dateString.match(/(\d{4})年(\d{1,2})月/);
-    if (yearMonthMatch) {
-      const [, year, month] = yearMonthMatch;
-      return `${year}-${month.padStart(2, '0')}-01`;
-    }
-
-    // handle year format: 2014年
-    const yearMatch = dateString.match(/(\d{4})年/);
-    if (yearMatch) {
-      return `${yearMatch[1]}-01-01`;
-    }
-
-    // handle pure numeric year: 2014
-    const simpleYearMatch = dateString.match(/^\d{4}$/);
-    if (simpleYearMatch) {
-      return `${dateString}-01-01`;
-    }
 
     // try to parse directly
     try {
