@@ -7,43 +7,38 @@ import { DataUtils } from '../utils/data-utils';
 
 export class DataTransformer {
   static transformOrganization = (
-    excelRow: Organization,
+    organization: Organization,
   ): OrganizationData => ({
-    name: excelRow['常用名称'] || excelRow.name || '',
-    code: excelRow['机构信用代码'] || excelRow.code || '',
-    entityType: DataUtils.transformEntityType(
-      excelRow['实体类型'] || excelRow.entityType,
-    ),
+    name: organization.name || '',
+    code: organization.code || '',
+    entityType: DataUtils.transformEntityType(organization.entityType),
     registrationCountry: DataUtils.transformRegistrationCountry(
-      excelRow['注册国籍'] || excelRow.registrationCountry,
+      organization.registrationCountry,
     ),
-    establishedDate: DateTransformer.parseDate(
-      excelRow['成立时间'] || excelRow.establishedDate,
-    ),
+    establishedDate: DateTransformer.parseDate(organization.establishedDate),
     coverageArea: ServiceTransformer.extractCoverageFromDescription(
-      excelRow['机构／项目简介'] || excelRow.description,
+      organization.description,
     ),
-    description: DataUtils.cleanDescription(
-      excelRow['机构／项目简介'] || excelRow.description || '',
-    ),
+    description: DataUtils.cleanDescription(organization.description || ''),
     staffCount: DataUtils.parseStaffCount(
-      excelRow['机构／项目全职人数'] || excelRow.staffCount,
+      organization['机构／项目全职人数'] || organization.staffCount,
     ),
     address: AddressTransformer.transformAddress({
       province: AddressTransformer.extractProvinceFromAddress(
-        excelRow['注册地'] || excelRow['具体地址'],
+        organization['注册地'] || organization['具体地址'],
       ),
       city: AddressTransformer.extractCityFromAddress(
-        excelRow['注册地'] || excelRow['具体地址'],
+        organization['注册地'] || organization['具体地址'],
       ),
       district: AddressTransformer.extractDistrictFromAddress(
-        excelRow['注册地'] || excelRow['具体地址'],
+        organization['注册地'] || organization['具体地址'],
       ),
-      street: excelRow['具体地址'] || excelRow.street || '',
+      street: organization['具体地址'] || organization.street || '',
     }),
-    services: ServiceTransformer.transformServices(excelRow),
-    internetContact: ServiceTransformer.transformContacts(excelRow),
-    qualifications: QualificationTransformer.transformQualifications(excelRow),
+    services: ServiceTransformer.transformServices(organization),
+    internetContact: ServiceTransformer.transformContacts(organization),
+    qualifications:
+      QualificationTransformer.transformQualifications(organization),
     publishedAt: new Date().toISOString(),
   });
 }
