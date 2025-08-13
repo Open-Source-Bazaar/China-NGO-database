@@ -12,37 +12,39 @@ export class ServiceTransformer {
     const services: Service[] = [];
 
     // extract service information from various education related fields
-    for (const field of EDUCATION_FIELDS) {
+    const educationServices = EDUCATION_FIELDS.filter(
+      (field) => excelRow[field],
+    ).map((field) => {
       const value = excelRow[field];
-      if (value) {
-        // determine service category based on field type
-        let serviceCategory = SERVICE_CATEGORY_MAPPING.其他;
-        if (field.includes('早教'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.学前教育;
-        else if (field.includes('义务教育'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.小学教育;
-        else if (field.includes('高等教育'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.高等教育;
-        else if (field.includes('特殊教育'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.特殊教育;
-        else if (field.includes('支教'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.教师发展;
-        else if (field.includes('助学'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.学生支持;
-        else if (field.includes('技术支持'))
-          serviceCategory = SERVICE_CATEGORY_MAPPING.教育硬件;
+      // determine service category based on field type
+      let serviceCategory = SERVICE_CATEGORY_MAPPING.其他;
+      if (field.includes('早教'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.学前教育;
+      else if (field.includes('义务教育'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.小学教育;
+      else if (field.includes('高等教育'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.高等教育;
+      else if (field.includes('特殊教育'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.特殊教育;
+      else if (field.includes('支教'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.教师发展;
+      else if (field.includes('助学'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.学生支持;
+      else if (field.includes('技术支持'))
+        serviceCategory = SERVICE_CATEGORY_MAPPING.教育硬件;
 
-        services.push({
-          serviceCategory,
-          serviceContent: value,
-          serviceTargets: this.extractTargetGroups(excelRow),
-          supportMethods: value,
-          projectStatus: SERVICE_STATUS.ONGOING,
-          servesAllPopulation:
-            excelRow['关于人群类服务对象服务全部人群'] === '是',
-        });
-      }
-    }
+      return {
+        serviceCategory,
+        serviceContent: value,
+        serviceTargets: this.extractTargetGroups(excelRow),
+        supportMethods: value,
+        projectStatus: SERVICE_STATUS.ONGOING,
+        servesAllPopulation:
+          excelRow['关于人群类服务对象服务全部人群'] === '是',
+      };
+    });
+
+    services.push(...educationServices);
 
     // if no service information, create basic service based on industry service object
     if (services.length === 0 && excelRow[' 关于行业类服务对象']) {
@@ -60,14 +62,9 @@ export class ServiceTransformer {
   };
 
   static extractTargetGroups = (excelRow: ExcelRow): string => {
-    const targets: string[] = [];
-    for (const field of TARGET_GROUP_FIELDS) {
-      if (excelRow[field]) {
-        targets.push(excelRow[field]);
-      }
-    }
-
-    return targets.join('; ');
+    return TARGET_GROUP_FIELDS.filter((field) => excelRow[field])
+      .map((field) => excelRow[field])
+      .join('; ');
   };
 
   static transformContacts(excelRow: ExcelRow): InternetContact {
