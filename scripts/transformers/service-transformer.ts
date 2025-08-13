@@ -1,4 +1,4 @@
-import { Service, InternetContact, ExcelRow } from '../types';
+import { Service, InternetContact, Organization } from '../types';
 import {
   SERVICE_CATEGORY_MAPPING,
   EDUCATION_FIELDS,
@@ -8,14 +8,14 @@ import {
 } from '../constants';
 
 export class ServiceTransformer {
-  static transformServices = (excelRow: ExcelRow): Service[] => {
+  static transformServices = (organization: Organization): Service[] => {
     const services: Service[] = [];
 
     // extract service information from various education related fields
     const educationServices = EDUCATION_FIELDS.filter(
-      (field) => excelRow[field],
+      (field) => organization[field],
     ).map((field) => {
-      const value = excelRow[field];
+      const value = organization[field];
       // determine service category based on field type
       let serviceCategory = SERVICE_CATEGORY_MAPPING.其他;
       if (field.includes('早教'))
@@ -36,22 +36,22 @@ export class ServiceTransformer {
       return {
         serviceCategory,
         serviceContent: value,
-        serviceTargets: this.extractTargetGroups(excelRow),
+        serviceTargets: this.extractTargetGroups(organization),
         supportMethods: value,
         projectStatus: SERVICE_STATUS.ONGOING,
         servesAllPopulation:
-          excelRow['关于人群类服务对象服务全部人群'] === '是',
+          organization['关于人群类服务对象服务全部人群'] === '是',
       };
     });
 
     services.push(...educationServices);
 
     // if no service information, create basic service based on industry service object
-    if (services.length === 0 && excelRow[' 关于行业类服务对象']) {
+    if (services.length === 0 && organization[' 关于行业类服务对象']) {
       services.push({
         serviceCategory: SERVICE_CATEGORY_MAPPING.其他,
-        serviceContent: excelRow[' 关于行业类服务对象'],
-        serviceTargets: excelRow[' 关于行业类服务对象'],
+        serviceContent: organization[' 关于行业类服务对象'],
+        serviceTargets: organization[' 关于行业类服务对象'],
         supportMethods: '',
         projectStatus: SERVICE_STATUS.ONGOING,
         servesAllPopulation: false,
@@ -61,29 +61,29 @@ export class ServiceTransformer {
     return services;
   };
 
-  static extractTargetGroups = (excelRow: ExcelRow): string => {
-    return TARGET_GROUP_FIELDS.filter((field) => excelRow[field])
-      .map((field) => excelRow[field])
+  static extractTargetGroups = (organization: Organization): string => {
+    return TARGET_GROUP_FIELDS.filter((field) => organization[field])
+      .map((field) => organization[field])
       .join('; ');
   };
 
-  static transformContacts(excelRow: ExcelRow): InternetContact {
+  static transformContacts(organization: Organization): InternetContact {
     const contact: InternetContact = {};
 
     // 官网
-    const website = excelRow['机构官网'] || excelRow.website;
+    const website = organization['机构官网'] || organization.website;
     if (website) {
       contact.website = website;
     }
 
     // 微信公众号
-    const wechat = excelRow['机构微信公众号'];
+    const wechat = organization['机构微信公众号'];
     if (wechat) {
       contact.wechatPublic = wechat;
     }
 
     // 微博
-    const weibo = excelRow['机构微博'];
+    const weibo = organization['机构微博'];
     if (weibo) {
       contact.weibo = weibo;
     }

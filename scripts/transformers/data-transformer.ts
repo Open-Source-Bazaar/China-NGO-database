@@ -1,4 +1,4 @@
-import { OrganizationData, ExcelRow } from '../types';
+import { OrganizationData, Organization } from '../types';
 import { AddressTransformer } from './address-transformer';
 import { DateTransformer } from './date-transformer';
 import { ServiceTransformer } from './service-transformer';
@@ -6,7 +6,9 @@ import { QualificationTransformer } from './qualification-transformer';
 import { DataUtils } from '../utils/data-utils';
 
 export class DataTransformer {
-  static transformOrganization = (excelRow: ExcelRow): OrganizationData => ({
+  static transformOrganization = (
+    excelRow: Organization,
+  ): OrganizationData => ({
     name: excelRow['常用名称'] || excelRow.name || '',
     code: excelRow['机构信用代码'] || excelRow.code || '',
     entityType: DataUtils.transformEntityType(

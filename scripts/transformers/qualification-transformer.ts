@@ -1,11 +1,13 @@
-import { Qualification, ExcelRow } from '../types';
+import { Qualification, Organization } from '../types';
 import { QUALIFICATION_INDICATORS, QUALIFICATION_TYPES } from '../constants';
 
 export class QualificationTransformer {
-  static transformQualifications = (excelRow: ExcelRow): Qualification[] => {
+  static transformQualifications = (
+    organization: Organization,
+  ): Qualification[] => {
     // Transform qualification indicators using map
     const qualifications = QUALIFICATION_INDICATORS.filter(
-      (indicator) => excelRow[indicator],
+      (indicator) => organization[indicator],
     ).map((indicator) => {
       let qualificationType: (typeof QUALIFICATION_TYPES)[keyof typeof QUALIFICATION_TYPES] =
         QUALIFICATION_TYPES.NO_SPECIAL;
@@ -26,11 +28,11 @@ export class QualificationTransformer {
     });
 
     // Add general qualification if organization has any legal status
-    if (excelRow['登记管理机关'] && qualifications.length === 0) {
+    if (organization['登记管理机关'] && qualifications.length === 0) {
       qualifications.push({
         qualificationType: QUALIFICATION_TYPES.NO_SPECIAL,
         certificateName: '社会组织评估等级',
-        issuingAuthority: excelRow['登记管理机关'],
+        issuingAuthority: organization['登记管理机关'],
       });
     }
 
