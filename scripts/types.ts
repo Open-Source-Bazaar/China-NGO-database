@@ -73,7 +73,6 @@ export interface OrganizationData {
 
 // Excel行数据接口
 export interface Organization {
-  [key: string]: any;
   常用名称?: string;
   name?: string;
   机构信用代码?: string;
