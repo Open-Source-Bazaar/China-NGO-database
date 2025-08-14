@@ -7,7 +7,6 @@ eslint.config.*
 Dockerfile
 docker-compose.yml
 scripts/
-types/
 types/pnpm-lock.yaml
 start.sh
 .husky/
