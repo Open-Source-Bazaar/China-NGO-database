@@ -71,7 +71,7 @@ export class ServiceTransformer {
 
     // 官网
     const website =
-      organization['机构官网'] || organization.internetContact.website;
+      organization['机构官网'] || organization.internetContact?.website || '';
 
     if (website) contact.website = website;
 

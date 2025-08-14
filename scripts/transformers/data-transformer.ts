@@ -39,7 +39,7 @@ export class DataTransformer {
       district: AddressTransformer.extractDistrictFromAddress(
         organization['注册地'] || organization['具体地址'],
       ),
-      street: organization['具体地址'] || organization.address.street || '',
+      street: organization['具体地址'] || organization.address?.street || '',
     }),
     services: ServiceTransformer.transformServices(organization),
     internetContact: ServiceTransformer.transformContacts(organization),
