@@ -18,9 +18,7 @@ import { DataImporter } from './utils/data-importer';
 // Configuration
 const CONFIG: Config = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
-  STRAPI_TOKEN:
-    process.env.STRAPI_TOKEN ||
-    'eb1151a5d1c6d56daace59fa64f7dfddc409f306a72c03a10b92d714ca66c549fd18aaf3b1713c38a5e7797c6a00342b66896521ca977a6f4e530e8a87d7c1398c1d7b034e06f13e4b9b9be74bb44a23e57480395a7d5f6b50ad7af738f5471fceaf83191d3d80965c03bb6e2d0113972ab5eb7a2f807b89db23a51a5e565ef2',
+  STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
   BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
