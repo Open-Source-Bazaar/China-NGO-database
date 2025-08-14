@@ -6,6 +6,7 @@ node_modules/
 eslint.config.*
 Dockerfile
 docker-compose.yml
+scripts/
 start.sh
 .husky/
 .git/
