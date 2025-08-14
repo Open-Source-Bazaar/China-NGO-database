@@ -6,6 +6,12 @@ node_modules/
 eslint.config.*
 Dockerfile
 docker-compose.yml
+scripts/
+types/
+types/generated/
+types/client/
+types/*.ts
+types/pnpm-lock.yaml
 start.sh
 .husky/
 .git/
