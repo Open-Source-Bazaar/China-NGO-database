@@ -6,17 +6,17 @@ export class StrapiAPI {
   constructor(
     private baseURL: string,
     private token: string,
-  ) {}
+  ) {
+    this.client.baseURI = this.baseURL;
+  }
 
-  client = new HTTPClient({ baseURI: this.baseURL, responseType: 'json' }).use(
-    ({ request }, next) => {
-      request.headers = {
-        Authorization: `Bearer ${this.token}`,
-        ...request.headers,
-      };
-      return next();
-    },
-  );
+  client = new HTTPClient({ responseType: 'json' }).use(({ request }, next) => {
+    request.headers = {
+      Authorization: `Bearer ${this.token}`,
+      ...request.headers,
+    };
+    return next();
+  });
 
   async createOrganization(data: OrganizationData) {
     const { body } = await this.client.post<OrganizationData>(

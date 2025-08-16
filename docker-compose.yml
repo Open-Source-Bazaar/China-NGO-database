@@ -17,7 +17,7 @@ services:
   strapi-server:
     depends_on:
       - postgres-server
-    image: idea2app/strapi-pnpm-docker-ts
+    image: open-source-bazaar/china-ngo-database
     environment:
       - DATABASE_CLIENT=postgres
       - DATABASE_URL=postgres://postgres:${ADMIN_JWT_SECRET}@postgres-server:5432/postgres

@@ -1,8 +1,8 @@
-# Strapi-PNPM-Docker-ts
+# China-NGO-database
 
 [Strapi][7] scaffold with [TypeScript][5], [PNPM][6] & [Docker][9], which is made with ❤️ by [idea2app][1].
 
-[![Deploy to Production environment](https://github.com/idea2app/Strapi-PNPM-Docker-ts/actions/workflows/deploy-production.yml/badge.svg)][2]
+[![Deploy to Production environment](https://github.com/Open-Source-Bazaar/China-NGO-database/actions/workflows/deploy-production.yml/badge.svg)][2]
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)][3]
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)][4]
@@ -143,9 +143,9 @@ Feel free to check out the [Strapi GitHub repository][35]. Your feedback and con
 <sub>🤫 Psst! [Strapi is hiring][39].</sub>
 
 [1]: https://idea2.app/
-[2]: https://github.com/idea2app/Strapi-PNPM-Docker-ts/actions/workflows/deploy-production.yml
-[3]: https://codespaces.new/idea2app/Strapi-PNPM-Docker-ts
-[4]: https://gitpod.io/?autostart=true#https://github.com/idea2app/Strapi-PNPM-Docker-ts
+[2]: https://github.com/Open-Source-Bazaar/China-NGO-database/actions/workflows/deploy-production.yml
+[3]: https://codespaces.new/Open-Source-Bazaar/China-NGO-database
+[4]: https://gitpod.io/?autostart=true#https://github.com/Open-Source-Bazaar/China-NGO-database
 [5]: https://www.typescriptlang.org/
 [6]: https://pnpm.io/
 [7]: https://strapi.io/
@@ -161,11 +161,11 @@ Feel free to check out the [Strapi GitHub repository][35]. Your feedback and con
 [17]: https://github.com/ckeditor/strapi-plugin-ckeditor
 [18]: https://github.com/wisnuwiry/strapi-geodata
 [19]: https://github.com/apps/settings
-[20]: https://github.com/new?template_name=Strapi-PNPM-Docker-ts&template_owner=idea2app
-[21]: https://codespaces.new/idea2app/Strapi-PNPM-Docker-ts
+[20]: https://github.com/new?template_name=China-NGO-database&template_owner=Open-Source-Bazaar
+[21]: https://codespaces.new/Open-Source-Bazaar/China-NGO-database
 [22]: https://github.com/FreeCodeCamp-Chengdu/FreeCodeCamp-Chengdu.github.io/blob/8df9944449002758f7ec809deeb260ce08182259/.github/workflows/main.yml#L34-L63
-[23]: https://github.com/idea2app/Strapi-PNPM-Docker-ts/issues/new/choose
-[24]: https://github.com/idea2app/Strapi-PNPM-Docker-ts/projects
+[23]: https://github.com/Open-Source-Bazaar/China-NGO-database/issues/new/choose
+[24]: https://github.com/Open-Source-Bazaar/China-NGO-database/projects
 [25]: https://docs.strapi.io/dev-docs/cli#strapi-develop
 [26]: https://docs.strapi.io/dev-docs/cli#strapi-start
 [27]: https://docs.strapi.io/dev-docs/cli#strapi-build

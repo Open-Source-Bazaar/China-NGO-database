@@ -1,4 +1,4 @@
-# Strapi-PNPM-Docker-ts - Type package
+# China-NGO-database - Type package
 
 ## Usage
 
@@ -15,7 +15,7 @@
 ```shell
 npm i pnpm -g
 
-pnpm i @idea2app/strapi-pnpm-docker-ts -D
+pnpm i @open-source-bazaar/china-ngo-database -D
 ```
 
 [1]: https://github.com/settings/tokens
