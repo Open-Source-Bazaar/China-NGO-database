@@ -1,8 +1,9 @@
-import { OrganizationData, Organization } from '../types';
+import { OrganizationData, Organization, UserData } from '../types';
 import { AddressTransformer } from './address-transformer';
 import { DateTransformer } from './date-transformer';
 import { ServiceTransformer } from './service-transformer';
 import { QualificationTransformer } from './qualification-transformer';
+import { UserTransformer } from './user-transformer';
 import { DataUtils } from '../utils/data-utils';
 
 export class DataTransformer {
@@ -47,4 +48,11 @@ export class DataTransformer {
       QualificationTransformer.transformQualifications(organization),
     publishedAt: new Date().toISOString(),
   });
+
+  static transformUser = (
+    organization: Organization,
+    organizationId?: number,
+  ): UserData | null => {
+    return UserTransformer.transformUser(organization, organizationId);
+  };
 }

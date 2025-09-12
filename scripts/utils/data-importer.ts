@@ -1,4 +1,4 @@
-import { sleep, splitArray } from 'web-utility';
+import { splitArray } from 'web-utility';
 
 import { OrganizationData, ImportStats } from '../types';
 import { StrapiAPI } from './strapi-api';
@@ -27,11 +27,11 @@ export class DataImporter {
 
       await this.processBatch(batch);
 
-      // 增加延迟降低并发压力
-      if (i < batches.length - 1) {
-        console.log('等待 2s 避免并发压力...');
-        await sleep(1); // 1秒延迟
-      }
+      // // 增加延迟降低并发压力
+      // if (i < batches.length - 1) {
+      //   console.log('等待 2s 避免并发压力...');
+      //   await sleep(1); // 1秒延迟
+      // }
     }
 
     this.printStats();
@@ -71,6 +71,8 @@ export class DataImporter {
 
       // 创建新组织
       try {
+        let createdOrganization: any = null;
+
         if (this.dryRun) {
           console.log(`[DRY RUN] 将创建组织: ${org.name}`);
           this.stats.success++;
@@ -78,7 +80,11 @@ export class DataImporter {
           continue;
         }
 
-        await this.api.createOrganization(org);
+        // 清理数据，移除内部字段
+        const cleanOrgData = { ...org };
+        delete (cleanOrgData as any)._originalData;
+
+        createdOrganization = await this.api.createOrganization(cleanOrgData);
         console.log(`✓ 成功创建组织: ${org.name}`);
         this.stats.success++;
         smallCache.add(org.name);
