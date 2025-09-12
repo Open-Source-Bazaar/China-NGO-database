@@ -35,7 +35,6 @@ export class StrapiAPI {
 
   async createUser(data: UserData) {
     const { body } = await this.client.post<UserData>('/api/users', data);
-
     return body;
   }
 

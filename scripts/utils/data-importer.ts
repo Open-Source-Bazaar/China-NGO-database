@@ -27,8 +27,11 @@ export class DataImporter {
 
       await this.processBatch(batch);
 
-      // add delay to avoid API limit
-      if (i < batches.length) await sleep(1);
+      // 增加延迟降低并发压力
+      if (i < batches.length - 1) {
+        console.log('等待 2s 避免并发压力...');
+        await sleep(1); // 1秒延迟
+      }
     }
 
     this.printStats();
@@ -36,38 +39,54 @@ export class DataImporter {
   }
 
   private async processBatch(organizations: OrganizationData[]): Promise<void> {
-    const promises = organizations.map((org) => this.processOrganization(org));
+    // 使用小型缓存避免内存问题
+    const smallCache = new Set<string>();
 
-    await Promise.allSettled(promises);
-  }
-
-  private async processOrganization(orgData: OrganizationData): Promise<void> {
-    try {
+    for (const org of organizations) {
       this.stats.total++;
 
-      // check if organization already exists
-      if (orgData.name) {
-        const existing = await this.api.findOrganizationByName(orgData.name);
-        if (existing) {
-          console.log(`跳过已存在的组织: ${orgData.name}`);
-          this.logger.logSkipped(orgData, '组织已存在');
-          this.stats.skipped++;
-          return;
+      if (!org.name) {
+        console.log(`跳过无名称的组织`);
+        this.stats.skipped++;
+        continue;
+      }
+
+      // 检查小型缓存
+      if (smallCache.has(org.name)) {
+        console.log(`跳过批次内重复: ${org.name}`);
+        this.logger.logSkipped(org, '批次内重复');
+        this.stats.skipped++;
+        continue;
+      }
+
+      // 检查数据库中是否已存在（避免大内存缓存）
+      const existing = await this.api.findOrganizationByName(org.name);
+      if (existing) {
+        console.log(`跳过已存在的组织: ${org.name}`);
+        this.logger.logSkipped(org, '组织已存在');
+        this.stats.skipped++;
+        smallCache.add(org.name); // 添加到小型缓存
+        continue;
+      }
+
+      // 创建新组织
+      try {
+        if (this.dryRun) {
+          console.log(`[DRY RUN] 将创建组织: ${org.name}`);
+          this.stats.success++;
+          smallCache.add(org.name);
+          continue;
         }
-      }
-      if (this.dryRun) {
-        console.log(`[DRY RUN] 将创建组织: ${orgData.name}`);
+
+        await this.api.createOrganization(org);
+        console.log(`✓ 成功创建组织: ${org.name}`);
         this.stats.success++;
-        return;
+        smallCache.add(org.name);
+      } catch (error: any) {
+        console.error(`✗ 创建组织失败: ${org.name}`, error.message);
+        this.logger.logFailed(org, error);
+        this.stats.failed++;
       }
-      // create organization
-      await this.api.createOrganization(orgData);
-      console.log(`✓ 成功创建组织: ${orgData.name}`);
-      this.stats.success++;
-    } catch (error: any) {
-      console.error(`✗ 创建组织失败: ${orgData.name}`, error.message);
-      this.logger.logFailed(orgData, error);
-      this.stats.failed++;
     }
   }
 
