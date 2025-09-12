@@ -18,9 +18,7 @@ import { DataImporter } from './utils/data-importer';
 // Configuration
 const CONFIG: Config = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
-  STRAPI_TOKEN:
-    process.env.STRAPI_TOKEN ||
-    '7446c2c3089a0bc0a469796e6649271db7bc66cb31ecfe2791ccde53e1668ace62ed9044723407062ed001be8bc15d1fce387b84b4bb3c449fd435abcc33e8994c7ff4672ad8764cbc613e9c6eb9640bb3b78f7e24979f58ac35fbd34ba151b1b8dc7d744bf80b906034dc0a82f853232576f6c034c305cdc69f93d8366c8255',
+  STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
   BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
@@ -77,7 +75,10 @@ async function main(): Promise<void> {
     const organizations = limitedData
       .map((row) => {
         try {
-          return DataTransformer.transformOrganization(row);
+          const organization = DataTransformer.transformOrganization(row);
+          (organization as any)._originalData = row;
+
+          return organization;
         } catch (error: any) {
           const orgName = row['常用名称'] || row.name || 'Unknown';
           console.warn(`转换数据失败，跳过行: ${orgName}`, error.message);
