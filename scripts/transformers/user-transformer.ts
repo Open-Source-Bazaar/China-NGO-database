@@ -1,7 +1,9 @@
-import { ExtendedUserData } from '../types';
+import { ExtendedUserData, Organization } from '../types';
 
 export class UserTransformer {
-  static transformUser = (organization: any): ExtendedUserData | null => {
+  static transformUser = (
+    organization: Organization,
+  ): ExtendedUserData | null => {
     // 获取用户信息
     const contactName = organization['机构联系人联系人姓名'] || '';
     const contactPhone = organization['机构联系人联系人电话'] || '';
@@ -42,12 +44,12 @@ export class UserTransformer {
     } as ExtendedUserData;
   };
 
-  static extractPrincipalName = (organization: any): string => {
+  static extractPrincipalName = (organization: Organization): string => {
     return organization['负责人'] || '';
   };
 
   static extractContactInfo = (
-    organization: any,
+    organization: Organization,
   ): {
     name: string;
     phone: string;

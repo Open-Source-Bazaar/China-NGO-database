@@ -1,8 +1,19 @@
 import { splitArray } from 'web-utility';
 
-import { OrganizationData, ImportStats } from '../types';
+import { OrganizationData, ImportStats, ExtendedUserData } from '../types';
 import { StrapiAPI } from './strapi-api';
 import { ImportLogger } from './import-logger';
+
+// 类型守卫函数
+function hasId(
+  user: ExtendedUserData | null | undefined,
+): user is ExtendedUserData & { id: number } {
+  return user !== null && user !== undefined && typeof user.id === 'number';
+}
+
+function isExtendedUserData(obj: any): obj is ExtendedUserData {
+  return obj && typeof obj === 'object' && 'email' in obj && 'username' in obj;
+}
 
 export class DataImporter {
   public logger: ImportLogger;
@@ -81,41 +92,67 @@ export class DataImporter {
         }
 
         // 清理数据，移除内部字段
-        const cleanOrgData = { ...org };
-        delete (cleanOrgData as any)._originalData;
+        const cleanOrgData: OrganizationData = { ...org };
+        // 使用类型断言安全地移除内部字段
+        if ('_originalData' in cleanOrgData) {
+          delete (
+            cleanOrgData as OrganizationData & { _originalData?: unknown }
+          )._originalData;
+        }
 
         // 如果有联系人用户，先创建用户
         if (cleanOrgData.contactUser) {
           try {
             // 验证用户数据
-            const contactUser = cleanOrgData.contactUser as any;
-            if (!contactUser.email || !contactUser.username) {
-              throw new Error('用户数据缺少必需字段：email 或 username');
-            }
+            const contactUser = cleanOrgData.contactUser;
+            let userId: number;
 
-            // 检查用户是否已存在
-            const existingUser = await this.api.findUserByEmail(
-              contactUser.email,
-            );
-            if (existingUser) {
-              console.log(`✓ 使用现有用户: ${contactUser.username}`);
-              cleanOrgData.contactUser = (existingUser as any).id;
-            } else {
-              const createdUser = await this.api.createUser(contactUser);
-              console.log(`✓ 成功创建联系人用户: ${contactUser.username}`);
-
-              // 设置组织与用户的关联
-              const userId = (createdUser as any).id;
-              if (!userId) {
-                throw new Error(`创建的用户缺少ID: ${contactUser.username}`);
+            if (typeof contactUser === 'number') {
+              // 已经是用户ID，直接使用
+              userId = contactUser;
+              console.log(`✓ 使用现有用户ID: ${userId}`);
+            } else if (isExtendedUserData(contactUser)) {
+              // 是用户对象，检查必需字段
+              if (!contactUser.email || !contactUser.username) {
+                throw new Error('用户数据缺少必需字段：email 或 username');
               }
-              cleanOrgData.contactUser = userId;
+
+              // 检查用户是否已存在
+              const existingUser = await this.api.findUserByEmail(
+                contactUser.email,
+              );
+              if (hasId(existingUser)) {
+                console.log(`✓ 使用现有用户: ${contactUser.username}`);
+                userId = existingUser.id;
+              } else {
+                const createdUser = await this.api.createUser(contactUser);
+                console.log(`✓ 成功创建联系人用户: ${contactUser.username}`);
+
+                // 验证创建的用户有ID
+                if (!hasId(createdUser)) {
+                  throw new Error(`创建的用户缺少ID: ${contactUser.username}`);
+                }
+                userId = createdUser.id;
+              }
+            } else {
+              throw new Error('contactUser 字段类型无效');
             }
-          } catch (userError: any) {
+
+            // 设置组织与用户的关联
+            cleanOrgData.contactUser = userId;
+          } catch (userError: unknown) {
+            const errorMessage =
+              userError instanceof Error
+                ? userError.message
+                : String(userError);
             const username =
-              (cleanOrgData.contactUser as any)?.username || 'unknown';
-            console.error(`✗ 用户操作失败: ${username}`, userError.message);
-            this.logger.logFailed(org, userError);
+              typeof cleanOrgData.contactUser === 'object' &&
+              cleanOrgData.contactUser &&
+              'username' in cleanOrgData.contactUser
+                ? (cleanOrgData.contactUser as ExtendedUserData).username
+                : 'unknown';
+            console.error(`✗ 用户操作失败: ${username}`, errorMessage);
+            this.logger.logFailed(org, userError as Error);
             this.stats.failed++;
             continue;
           }
