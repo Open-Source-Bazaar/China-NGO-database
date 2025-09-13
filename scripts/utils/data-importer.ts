@@ -133,9 +133,13 @@ export class DataImporter {
               cleanOrgData.contactUser = null;
             } else {
               // Check if user already exists
-              const existingUser = await this.api.findUserByEmail(
-                userData.email,
-              );
+              let existingUser: ExtendedUserData | null = null;
+              try {
+                existingUser = await this.api.findUserByEmail(userData.email);
+              } catch (error: any) {
+                console.warn(`查找用户失败: ${userData.email}`, error.message);
+                // Continue with user creation
+              }
               let userId: number;
 
               if (hasId(existingUser)) {
