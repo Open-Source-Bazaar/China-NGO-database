@@ -53,13 +53,14 @@ export class DataImporter {
     for (const org of organizations) {
       this.stats.total++;
 
-      if (!org.name) {
+      const rawName = org.name ?? '';
+      const nameKey = rawName.trim();
+      if (!nameKey) {
         console.log(`跳过无名称的组织`);
         this.logger.logSkipped(org, '无名称');
         this.stats.skipped++;
         continue;
       }
-      const nameKey = org.name.trim();
 
       // Check small cache
       if (smallCache.has(nameKey)) {
