@@ -46,7 +46,6 @@ export class DataTransformer {
     internetContact: ServiceTransformer.transformContacts(organization),
     qualifications:
       QualificationTransformer.transformQualifications(organization),
-    publishedAt: new Date().toISOString(),
   });
 
   static transformUser = (
