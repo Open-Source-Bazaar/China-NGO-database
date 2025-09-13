@@ -87,8 +87,8 @@ export class DataImporter {
           continue;
         }
 
-        // 清理数据，移除内部字段
-        const cleanOrgData: OrganizationData = { ...org };
+        // 清理数据，移除内部字段，并清除名称两边的空格
+        const cleanOrgData: OrganizationData = { ...org, name: nameKey };
         // 使用类型断言安全地移除内部字段
         if ('_originalData' in cleanOrgData) {
           delete (
