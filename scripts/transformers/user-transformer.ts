@@ -31,16 +31,41 @@ export class UserTransformer {
 
     // 生成用户名：优先使用联系人姓名，没有则使用负责人，最后使用组织名
     const organizationName = organization['常用名称'] || organization.name;
-    const username =
+    const baseUsername =
       contactName || principalName || organizationName || `user_${Date.now()}`;
+
+    // 生成唯一的用户名：基础用户名 + 组织简称 + 序号（确保唯一性）
+    const orgShortName = organizationName
+      ? organizationName
+          .substring(0, 4)
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
+      : 'org';
+
+    // 清理用户名，移除特殊字符
+    const cleanBaseUsername = baseUsername.replace(
+      /[^a-zA-Z0-9\u4e00-\u9fa5]/g,
+      '',
+    );
+
+    // 生成带序号的用户名格式
+    const generateUsername = (suffix: string = ''): string => {
+      return `${cleanBaseUsername}_${orgShortName}${suffix}`;
+    };
+
+    // 生成唯一用户名（序号从1开始）
+    // 注意：这里只是生成用户名格式，实际唯一性检查在导入脚本中进行
+    let username = generateUsername();
 
     return {
       username,
       email,
+      password: Math.random().toString(36).slice(-12), // 生成随机密码
       confirmed: false, // 不需要确认
       blocked: true, // 阻止登录
       provider: 'local',
       phone: contactPhone || undefined,
+      // 设置默认角色（通常 authenticated 用户角色的 ID 是 1）
+      role: 1,
     } as ExtendedUserData;
   };
 

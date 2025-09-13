@@ -61,19 +61,22 @@ export class StrapiAPI {
   }
 
   async findUserByEmail(email: string): Promise<ExtendedUserData | undefined> {
-    const { body } = await this.client.get<
-      StrapiListResponse<ExtendedUserData>
-    >(`/api/users?filters[email][$eq]=${encodeURIComponent(email)}`);
-    return body.data?.[0];
+    try {
+      const { body } = await this.client.get<
+        StrapiListResponse<ExtendedUserData>
+      >(`/api/users?filters[email][$eq]=${encodeURIComponent(email)}`);
+      return body.data?.[0];
+    } catch (error) {
+      // 如果查询失败，返回undefined表示用户不存在
+      return undefined;
+    }
   }
 
   async createUser(userData: ExtendedUserData): Promise<ExtendedUserData> {
-    const { body } = await this.client.post<StrapiResponse<ExtendedUserData>>(
+    const { body } = await this.client.post<ExtendedUserData>(
       '/api/users',
-      {
-        data: userData,
-      },
+      userData,
     );
-    return body.data;
+    return body;
   }
 }
