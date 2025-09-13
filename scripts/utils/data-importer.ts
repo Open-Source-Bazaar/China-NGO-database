@@ -17,6 +17,7 @@ export class DataImporter {
 
   constructor(
     private api: StrapiAPI,
+    private userWeakMap: WeakMap<OrganizationData, ExtendedUserData>,
     private batchSize: number = 10,
     private dryRun: boolean = false,
   ) {
@@ -87,21 +88,13 @@ export class DataImporter {
           continue;
         }
 
-        // Clean data, remove internal fields, and trim name whitespace
+        // Clean data and trim name whitespace
         const cleanOrgData: OrganizationData = { ...org, name: nameKey };
-        // Safely remove internal fields using type assertion
-        if ('_originalData' in cleanOrgData) {
-          delete (
-            cleanOrgData as OrganizationData & { _originalData?: unknown }
-          )._originalData;
-        }
 
-        // Get user data (from _userData property)
+        // Get user data from WeakMap
         let userData: ExtendedUserData | undefined;
-        if ('_userData' in org) {
-          userData = (
-            org as OrganizationData & { _userData?: ExtendedUserData }
-          )._userData;
+        if (this.userWeakMap.has(org)) {
+          userData = this.userWeakMap.get(org);
         }
 
         // If user data exists, create user and associate
