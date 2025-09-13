@@ -1,4 +1,5 @@
 import { splitArray } from 'web-utility';
+import { randomBytes } from 'node:crypto';
 
 import { OrganizationData, ImportStats, ExtendedUserData } from '../types';
 import { StrapiAPI } from './strapi-api';
@@ -147,6 +148,12 @@ export class DataImporter {
                 console.log(`✓ 使用现有用户: ${userData.username}`);
                 userId = existingUser.id;
               } else {
+                // Ensure password exists as a safety fallback
+                if (!userData.password) {
+                  userData.password = randomBytes(18)
+                    .toString('base64url')
+                    .slice(0, 24);
+                }
                 const createdUser = await this.api.createUser(userData);
                 console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
