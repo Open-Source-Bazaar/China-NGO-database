@@ -112,33 +112,69 @@ export class DataImporter {
               throw new Error('用户数据缺少必需字段：email 或 username');
             }
 
-            // 检查用户是否已存在
-            const existingUser = await this.api.findUserByEmail(userData.email);
-            let userId: number;
-
-            if (hasId(existingUser)) {
-              console.log(`✓ 使用现有用户: ${userData.username}`);
-              userId = existingUser.id;
+            // 预验证用户名长度（Strapi通常限制50字符）
+            if (userData.username.length > 50) {
+              console.warn(
+                `⚠️ 用户名过长(${userData.username.length}字符)，跳过用户创建: ${userData.username}`,
+              );
+              // 记录到日志，方便后续检查
+              const failedOrgForLog = {
+                ...org,
+                name: `[用户名过长] ${org.name} (用户名: ${userData.username})`,
+              };
+              this.logger.logSkipped(
+                failedOrgForLog,
+                `用户名过长(${userData.username.length}字符)`,
+              );
+              cleanOrgData.contactUser = null;
+            } else if (/[｜（）()【】\[\]{}"'`]/.test(userData.username)) {
+              console.warn(
+                `⚠️ 用户名包含特殊字符，跳过用户创建: ${userData.username}`,
+              );
+              // 记录到日志，方便后续检查
+              const failedOrgForLog = {
+                ...org,
+                name: `[用户名特殊字符] ${org.name} (用户名: ${userData.username})`,
+              };
+              this.logger.logSkipped(failedOrgForLog, '用户名包含特殊字符');
+              cleanOrgData.contactUser = null;
             } else {
-              const createdUser = await this.api.createUser(userData);
-              console.log(`✓ 成功创建联系人用户: ${userData.username}`);
+              // 检查用户是否已存在
+              const existingUser = await this.api.findUserByEmail(
+                userData.email,
+              );
+              let userId: number;
 
-              // 验证创建的用户有ID
-              if (!hasId(createdUser)) {
-                throw new Error(`创建的用户缺少ID: ${userData.username}`);
+              if (hasId(existingUser)) {
+                console.log(`✓ 使用现有用户: ${userData.username}`);
+                userId = existingUser.id;
+              } else {
+                const createdUser = await this.api.createUser(userData);
+                console.log(`✓ 成功创建联系人用户: ${userData.username}`);
+
+                // 验证创建的用户有ID
+                if (!hasId(createdUser)) {
+                  throw new Error(`创建的用户缺少ID: ${userData.username}`);
+                }
+                userId = createdUser.id;
               }
-              userId = createdUser.id;
-            }
 
-            // 设置组织与用户的关联
-            cleanOrgData.contactUser = userId;
+              // 设置组织与用户的关联
+              cleanOrgData.contactUser = userId;
+            }
           } catch (userError: unknown) {
             console.error(
               `✗ 用户创建失败: ${userData?.username || 'unknown'} (组织: ${org.name})`,
             );
-            this.logger.logFailed(org, userError as Error);
+
+            // 记录用户创建失败到用户失败日志，但不阻止组织创建
+            const failedOrgForLog = {
+              ...org,
+              name: `${org.name} (用户名: ${userData.username})`,
+            };
+            this.logger.logUserFailed(failedOrgForLog, userError as Error);
             this.stats.failed++;
-            continue;
+            cleanOrgData.contactUser = null; // 设置为null，继续创建组织
           }
         } else {
           // 如果没有联系人用户，设置为null
@@ -151,7 +187,13 @@ export class DataImporter {
         smallCache.add(nameKey);
       } catch (error: any) {
         console.error(`✗ 创建组织失败: ${nameKey}`, error.message);
-        this.logger.logFailed(org, error);
+
+        // 记录组织创建失败
+        const failedOrgForLog = {
+          ...org,
+          name: `${org.name}`,
+        };
+        this.logger.logFailed(failedOrgForLog, error);
         this.stats.failed++;
       }
     }
@@ -159,12 +201,15 @@ export class DataImporter {
 
   private printStats() {
     const { total, success, failed, skipped } = this.stats;
+    const loggerSummary = this.logger.getSummary();
 
     console.log(`
 === 导入统计 ===
 总计: ${total}
 成功: ${success}
 失败: ${failed}
+  - 组织失败: ${loggerSummary.orgFailed}
+  - 用户失败: ${loggerSummary.userFailed}
 跳过: ${skipped}
 ================
 `);
