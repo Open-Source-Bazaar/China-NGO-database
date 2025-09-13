@@ -18,7 +18,9 @@ import { DataImporter } from './utils/data-importer';
 // Configuration
 const CONFIG: Config = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
-  STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
+  STRAPI_TOKEN:
+    process.env.STRAPI_TOKEN ||
+    'd264463362ab5556b0365e75c9393126f70fc747a3581179cd30c46d5d6b7dede77bb8f212fd12d57da1039109402f335fd02e8f671fd188b8a01477453686d9e08cf1fa7ea5ed8dcf1a6e3710ea7bf5a0bbf16fc482cddf1e600f124c33273bf2eb3aa81d165e62d0a6b5a346f3abd7665a35dcafab371936bf6b805fa15395',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
   BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
@@ -76,7 +78,14 @@ async function main(): Promise<void> {
       .map((row) => {
         try {
           const organization = DataTransformer.transformOrganization(row);
-          (organization as any)._originalData = row;
+
+          // Attach original data as non-enumerable property to avoid serialization to API
+          Object.defineProperty(organization, '_originalData', {
+            value: row,
+            enumerable: false,
+            writable: false,
+            configurable: false,
+          });
 
           return organization;
         } catch (error: any) {

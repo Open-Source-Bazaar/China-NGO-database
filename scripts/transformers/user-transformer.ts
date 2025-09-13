@@ -1,10 +1,7 @@
 import { ExtendedUserData } from '../types';
 
 export class UserTransformer {
-  static transformUser = (
-    organization: any,
-    organizationId?: number,
-  ): ExtendedUserData | null => {
+  static transformUser = (organization: any): ExtendedUserData | null => {
     // 获取用户信息
     const contactName = organization['机构联系人联系人姓名'] || '';
     const contactPhone = organization['机构联系人联系人电话'] || '';
@@ -42,7 +39,6 @@ export class UserTransformer {
       blocked: true, // 阻止登录
       provider: 'local',
       phone: contactPhone || undefined,
-      organizationName: organization['常用名称'] || organization.name,
     } as ExtendedUserData;
   };
 

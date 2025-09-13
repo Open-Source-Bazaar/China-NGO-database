@@ -73,8 +73,6 @@ export class DataImporter {
 
       // 创建新组织
       try {
-        let createdOrganization: any = null;
-
         if (this.dryRun) {
           console.log(`[DRY RUN] 将创建组织: ${nameKey}`);
           this.stats.success++;
@@ -86,7 +84,33 @@ export class DataImporter {
         const cleanOrgData = { ...org };
         delete (cleanOrgData as any)._originalData;
 
-        createdOrganization = await this.api.createOrganization(cleanOrgData);
+        // 如果有联系人用户，先创建用户
+        if (cleanOrgData.contactUser) {
+          try {
+            const createdUser = await this.api.createUser(
+              cleanOrgData.contactUser,
+            );
+            console.log(
+              `✓ 成功创建联系人用户: ${cleanOrgData.contactUser.username}`,
+            );
+
+            // 设置组织与用户的关联
+            cleanOrgData.contactUser = (createdUser as any).id || createdUser;
+          } catch (userError: any) {
+            console.error(
+              `✗ 创建用户失败: ${cleanOrgData.contactUser.username}`,
+              userError.message,
+            );
+            this.logger.logFailed(org, userError);
+            this.stats.failed++;
+            continue;
+          }
+        } else {
+          // 如果没有联系人用户，设置为null
+          cleanOrgData.contactUser = null;
+        }
+
+        await this.api.createOrganization(cleanOrgData);
         console.log(`✓ 成功创建组织: ${nameKey}`);
         this.stats.success++;
         smallCache.add(nameKey);

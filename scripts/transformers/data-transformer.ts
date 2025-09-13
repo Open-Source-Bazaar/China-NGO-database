@@ -10,6 +10,7 @@ export class DataTransformer {
   static transformOrganization = (
     organization: Organization,
   ): OrganizationData => ({
+    contactUser: UserTransformer.transformUser(organization),
     name: organization['常用名称'] || organization.name || '',
     code: organization['机构信用代码'] || organization.code || '',
     entityType: DataUtils.transformEntityType(
