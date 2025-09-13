@@ -7,7 +7,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Config, UserData } from './types';
+import { Config, ExtendedUserData } from './types';
 
 // Import modules
 import { DataTransformer } from './transformers/data-transformer';
@@ -78,7 +78,9 @@ async function main(): Promise<void> {
         }
       })
       .filter(
-        (item): item is { userData: UserData; organizationName: string } =>
+        (
+          item,
+        ): item is { userData: ExtendedUserData; organizationName: string } =>
           item !== null && !!item.userData.email,
       );
 
@@ -89,8 +91,9 @@ async function main(): Promise<void> {
     // Show examples in dry run mode
     if (CONFIG.DRY_RUN) {
       console.log('=== DRY RUN 模式 ===');
-      for (const [index, item] of usersWithOrgName.slice(0, 3).entries()) {
-        console.log(`示例 ${index + 1}:`, JSON.stringify(item, null, 2));
+      const examples = usersWithOrgName.slice(0, 3);
+      for (let i = 0; i < examples.length; i++) {
+        console.log(`示例 ${i + 1}:`, JSON.stringify(examples[i], null, 2));
       }
       console.log('==================\n');
     }

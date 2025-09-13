@@ -23,6 +23,12 @@ export {
   UsersPermissionsUser as UserData,
 } from '../types';
 
+// 扩展的用户数据接口（包含自定义字段）
+export type ExtendedUserData = import('../types').UsersPermissionsUser & {
+  phone?: string;
+  organizationName?: string;
+};
+
 // 组织数据接口
 type OrganizationData = import('../types').Organization;
 

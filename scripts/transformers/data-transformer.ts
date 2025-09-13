@@ -1,4 +1,4 @@
-import { OrganizationData, Organization, UserData } from '../types';
+import { OrganizationData, Organization, ExtendedUserData } from '../types';
 import { AddressTransformer } from './address-transformer';
 import { DateTransformer } from './date-transformer';
 import { ServiceTransformer } from './service-transformer';
@@ -52,7 +52,7 @@ export class DataTransformer {
   static transformUser = (
     organization: Organization,
     organizationId?: number,
-  ): UserData | null => {
+  ): ExtendedUserData | null => {
     return UserTransformer.transformUser(organization, organizationId);
   };
 }

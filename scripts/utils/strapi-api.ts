@@ -1,6 +1,6 @@
 import { HTTPClient } from 'koajax';
 
-import { OrganizationData } from '../types';
+import { OrganizationData, ExtendedUserData } from '../types';
 
 export class StrapiAPI {
   constructor(
@@ -31,5 +31,19 @@ export class StrapiAPI {
       `/api/organizations?filters[name][$eq]=${encodeURIComponent(name)}`,
     );
     return body.data?.[0];
+  }
+
+  async findUserByEmail(email: string) {
+    const { body } = await this.client.get<{ data: ExtendedUserData[] }>(
+      `/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
+    );
+    return body.data?.[0];
+  }
+
+  async createUser(userData: ExtendedUserData) {
+    const { body } = await this.client.post<ExtendedUserData>('/api/users', {
+      data: userData,
+    });
+    return body;
   }
 }
