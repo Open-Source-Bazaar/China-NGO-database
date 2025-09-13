@@ -34,11 +34,9 @@ export class UserTransformer {
     const baseUsername =
       contactName || principalName || organizationName || `user_${Date.now()}`;
 
-    // 生成唯一的用户名：基础用户名 + 组织简称 + 序号（确保唯一性）
-    const orgShortName = organizationName
-      ? organizationName
-          .substring(0, 4)
-          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
+    // 生成唯一的用户名：基础用户名 + 组织名称（确保唯一性）
+    const orgCleanName = organizationName
+      ? organizationName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
       : 'org';
 
     // 清理用户名，移除特殊字符
@@ -49,7 +47,7 @@ export class UserTransformer {
 
     // 生成带序号的用户名格式
     const generateUsername = (suffix: string = ''): string => {
-      return `${cleanBaseUsername}_${orgShortName}${suffix}`;
+      return `${cleanBaseUsername}_${orgCleanName}${suffix}`;
     };
 
     // 生成唯一用户名（序号从1开始）
