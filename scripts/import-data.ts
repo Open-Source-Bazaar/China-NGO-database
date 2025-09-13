@@ -18,9 +18,7 @@ import { DataImporter } from './utils/data-importer';
 // Configuration
 const CONFIG: Config = {
   STRAPI_URL: process.env.STRAPI_URL || 'http://localhost:1337',
-  STRAPI_TOKEN:
-    process.env.STRAPI_TOKEN ||
-    'd264463362ab5556b0365e75c9393126f70fc747a3581179cd30c46d5d6b7dede77bb8f212fd12d57da1039109402f335fd02e8f671fd188b8a01477453686d9e08cf1fa7ea5ed8dcf1a6e3710ea7bf5a0bbf16fc482cddf1e600f124c33273bf2eb3aa81d165e62d0a6b5a346f3abd7665a35dcafab371936bf6b805fa15395',
+  STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
   BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
@@ -72,20 +70,33 @@ async function main(): Promise<void> {
       );
     }
 
-    // Transform data format
+    // Transform data format with user support
     console.log('转换数据格式...');
     const organizations = limitedData
       .map((row) => {
         try {
           const organization = DataTransformer.transformOrganization(row);
 
-          // Attach original data as non-enumerable property to avoid serialization to API
+          // Extract user data from the same row
+          const userData = DataTransformer.transformUser(row);
+
+          // Attach original data and user info as non-enumerable properties
           Object.defineProperty(organization, '_originalData', {
             value: row,
             enumerable: false,
             writable: false,
             configurable: false,
           });
+
+          // Attach user data for later processing
+          if (userData) {
+            Object.defineProperty(organization, '_userData', {
+              value: userData,
+              enumerable: false,
+              writable: false,
+              configurable: false,
+            });
+          }
 
           return organization;
         } catch (error: any) {
@@ -127,7 +138,9 @@ function parseArgs(): void {
 
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-Strapi 数据导入工具
+Strapi 数据导入工具 (增强版)
+
+支持同时导入组织信息和联系人用户，并自动建立关联关系。
 
 用法:
   tsx scripts/import-data.ts [选项]
@@ -145,6 +158,13 @@ Strapi 数据导入工具
   MAX_ROWS          最大导入行数 (默认: 0, 表示导入所有行)
   DRY_RUN           模拟模式 (true/false)
 
+功能特性:
+  - 导入组织基本信息
+  - 自动创建联系人用户账户
+  - 建立组织与用户的关联关系
+  - 支持用户名冲突自动处理
+  - 重复检查和错误处理
+
 示例:
   # 正常导入
   STRAPI_TOKEN=your_token tsx import-data.ts
@@ -154,6 +174,9 @@ Strapi 数据导入工具
   
   # 导入指定工作表
   SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx import-data.ts
+  
+  # 仅测试前10行
+  MAX_ROWS=10 DRY_RUN=true tsx import-data.ts
 `);
     process.exit(0);
   }

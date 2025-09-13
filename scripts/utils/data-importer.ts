@@ -133,13 +133,8 @@ export class DataImporter {
             // 设置组织与用户的关联
             cleanOrgData.contactUser = userId;
           } catch (userError: unknown) {
-            const errorMessage =
-              userError instanceof Error
-                ? userError.message
-                : String(userError);
             console.error(
-              `✗ 用户操作失败: ${userData?.username || 'unknown'}`,
-              errorMessage,
+              `✗ 用户创建失败: ${userData?.username || 'unknown'} (组织: ${org.name})`,
             );
             this.logger.logFailed(org, userError as Error);
             this.stats.failed++;
