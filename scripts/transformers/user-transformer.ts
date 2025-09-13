@@ -1,4 +1,5 @@
 import { ExtendedUserData, Organization } from '../types';
+import { randomBytes } from 'node:crypto';
 
 export class UserTransformer {
   static transformUser = (
@@ -68,7 +69,7 @@ export class UserTransformer {
     return {
       username,
       email,
-      password: Math.random().toString(36).slice(-12), // 生成随机密码
+      password: randomBytes(18).toString('base64url').slice(0, 24), // 强随机密码
       confirmed: false, // 不需要确认
       blocked: true, // 阻止登录
       provider: 'local',
