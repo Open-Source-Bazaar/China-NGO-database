@@ -47,25 +47,27 @@ export class DataImporter {
 
       if (!org.name) {
         console.log(`跳过无名称的组织`);
+        this.logger.logSkipped(org, '无名称');
         this.stats.skipped++;
         continue;
       }
+      const nameKey = org.name.trim();
 
       // 检查小型缓存
-      if (smallCache.has(org.name)) {
-        console.log(`跳过批次内重复: ${org.name}`);
+      if (smallCache.has(nameKey)) {
+        console.log(`跳过批次内重复: ${nameKey}`);
         this.logger.logSkipped(org, '批次内重复');
         this.stats.skipped++;
         continue;
       }
 
       // 检查数据库中是否已存在（避免大内存缓存）
-      const existing = await this.api.findOrganizationByName(org.name);
+      const existing = await this.api.findOrganizationByName(nameKey);
       if (existing) {
-        console.log(`跳过已存在的组织: ${org.name}`);
+        console.log(`跳过已存在的组织: ${nameKey}`);
         this.logger.logSkipped(org, '组织已存在');
         this.stats.skipped++;
-        smallCache.add(org.name); // 添加到小型缓存
+        smallCache.add(nameKey); // 添加到小型缓存
         continue;
       }
 
@@ -74,9 +76,9 @@ export class DataImporter {
         let createdOrganization: any = null;
 
         if (this.dryRun) {
-          console.log(`[DRY RUN] 将创建组织: ${org.name}`);
+          console.log(`[DRY RUN] 将创建组织: ${nameKey}`);
           this.stats.success++;
-          smallCache.add(org.name);
+          smallCache.add(nameKey);
           continue;
         }
 
@@ -85,11 +87,11 @@ export class DataImporter {
         delete (cleanOrgData as any)._originalData;
 
         createdOrganization = await this.api.createOrganization(cleanOrgData);
-        console.log(`✓ 成功创建组织: ${org.name}`);
+        console.log(`✓ 成功创建组织: ${nameKey}`);
         this.stats.success++;
-        smallCache.add(org.name);
+        smallCache.add(nameKey);
       } catch (error: any) {
-        console.error(`✗ 创建组织失败: ${org.name}`, error.message);
+        console.error(`✗ 创建组织失败: ${nameKey}`, error.message);
         this.logger.logFailed(org, error);
         this.stats.failed++;
       }
