@@ -79,4 +79,28 @@ export class StrapiAPI {
     );
     return body;
   }
+
+  async findOrganizationByCode(
+    code: string,
+  ): Promise<OrganizationData | undefined> {
+    try {
+      const { body } = await this.client.get<
+        StrapiListResponse<OrganizationData>
+      >(`/api/organizations?filters[code][$eq]=${encodeURIComponent(code)}`);
+      return body.data?.[0];
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async updateOrganizationContactUser(
+    organizationId: number,
+    userId: number,
+  ): Promise<any> {
+    const { body } = await this.client.put<StrapiResponse<any>>(
+      `/api/organizations/${organizationId}`,
+      { data: { contactUser: userId } },
+    );
+    return body.data;
+  }
 }

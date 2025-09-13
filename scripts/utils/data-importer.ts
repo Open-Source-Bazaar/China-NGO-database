@@ -11,10 +11,6 @@ function hasId(
   return user !== null && user !== undefined && typeof user.id === 'number';
 }
 
-function isExtendedUserData(obj: any): obj is ExtendedUserData {
-  return obj && typeof obj === 'object' && 'email' in obj && 'username' in obj;
-}
-
 export class DataImporter {
   public logger: ImportLogger;
   private stats: ImportStats;
@@ -100,42 +96,38 @@ export class DataImporter {
           )._originalData;
         }
 
-        // 如果有联系人用户，先创建用户
-        if (cleanOrgData.contactUser) {
+        // 获取用户数据（从 _userData 属性）
+        let userData: ExtendedUserData | undefined;
+        if ('_userData' in org) {
+          userData = (
+            org as OrganizationData & { _userData?: ExtendedUserData }
+          )._userData;
+        }
+
+        // 如果有用户数据，创建用户并关联
+        if (userData) {
           try {
             // 验证用户数据
-            const contactUser = cleanOrgData.contactUser;
+            if (!userData.email || !userData.username) {
+              throw new Error('用户数据缺少必需字段：email 或 username');
+            }
+
+            // 检查用户是否已存在
+            const existingUser = await this.api.findUserByEmail(userData.email);
             let userId: number;
 
-            if (typeof contactUser === 'number') {
-              // 已经是用户ID，直接使用
-              userId = contactUser;
-              console.log(`✓ 使用现有用户ID: ${userId}`);
-            } else if (isExtendedUserData(contactUser)) {
-              // 是用户对象，检查必需字段
-              if (!contactUser.email || !contactUser.username) {
-                throw new Error('用户数据缺少必需字段：email 或 username');
-              }
-
-              // 检查用户是否已存在
-              const existingUser = await this.api.findUserByEmail(
-                contactUser.email,
-              );
-              if (hasId(existingUser)) {
-                console.log(`✓ 使用现有用户: ${contactUser.username}`);
-                userId = existingUser.id;
-              } else {
-                const createdUser = await this.api.createUser(contactUser);
-                console.log(`✓ 成功创建联系人用户: ${contactUser.username}`);
-
-                // 验证创建的用户有ID
-                if (!hasId(createdUser)) {
-                  throw new Error(`创建的用户缺少ID: ${contactUser.username}`);
-                }
-                userId = createdUser.id;
-              }
+            if (hasId(existingUser)) {
+              console.log(`✓ 使用现有用户: ${userData.username}`);
+              userId = existingUser.id;
             } else {
-              throw new Error('contactUser 字段类型无效');
+              const createdUser = await this.api.createUser(userData);
+              console.log(`✓ 成功创建联系人用户: ${userData.username}`);
+
+              // 验证创建的用户有ID
+              if (!hasId(createdUser)) {
+                throw new Error(`创建的用户缺少ID: ${userData.username}`);
+              }
+              userId = createdUser.id;
             }
 
             // 设置组织与用户的关联
@@ -145,13 +137,10 @@ export class DataImporter {
               userError instanceof Error
                 ? userError.message
                 : String(userError);
-            const username =
-              typeof cleanOrgData.contactUser === 'object' &&
-              cleanOrgData.contactUser &&
-              'username' in cleanOrgData.contactUser
-                ? (cleanOrgData.contactUser as ExtendedUserData).username
-                : 'unknown';
-            console.error(`✗ 用户操作失败: ${username}`, errorMessage);
+            console.error(
+              `✗ 用户操作失败: ${userData?.username || 'unknown'}`,
+              errorMessage,
+            );
             this.logger.logFailed(org, userError as Error);
             this.stats.failed++;
             continue;
