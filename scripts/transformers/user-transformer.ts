@@ -5,14 +5,20 @@ export class UserTransformer {
     organization: Organization,
   ): ExtendedUserData | null => {
     // 获取用户信息
-    const contactName = organization['机构联系人联系人姓名'] || '';
-    const contactPhone = organization['机构联系人联系人电话'] || '';
-    const contactEmail = organization['机构联系人联系人邮箱'] || '';
-    const principalName = organization['负责人'] || '';
+    const contactName = String(
+      organization['机构联系人联系人姓名'] ?? '',
+    ).trim();
+    const contactPhone = String(
+      organization['机构联系人联系人电话'] ?? '',
+    ).trim();
+    const contactEmail = String(organization['机构联系人联系人邮箱'] ?? '')
+      .trim()
+      .toLowerCase();
+    const principalName = String(organization['负责人'] ?? '').trim();
 
     // 检查是否有联系方式（邮箱或手机）
-    const hasValidEmail = contactEmail && contactEmail.includes('@');
-    const hasValidPhone = contactPhone && contactPhone.trim().length > 0;
+    const hasValidEmail = contactEmail.includes('@');
+    const hasValidPhone = contactPhone.length > 0;
 
     // 如果没有任何联系方式，则不创建用户
     if (!hasValidEmail && !hasValidPhone) {
