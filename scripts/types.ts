@@ -10,6 +10,7 @@ export interface Config {
   EXCEL_FILE: string;
   SHEET_NAME: string | null;
   BATCH_SIZE: number;
+  BATCH_DELAY: number;
   DRY_RUN: boolean;
   MAX_ROWS: number;
 }

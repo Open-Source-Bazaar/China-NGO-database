@@ -20,6 +20,7 @@ export class DataImporter {
     private api: StrapiAPI,
     private userWeakMap: WeakMap<OrganizationData, ExtendedUserData>,
     private batchSize: number = 10,
+    private batchDelay: number = 0,
     private dryRun: boolean = false,
   ) {
     this.logger = new ImportLogger();
@@ -36,11 +37,11 @@ export class DataImporter {
 
       await this.processBatch(batch);
 
-      // // 增加延迟降低并发压力
-      // if (i < batches.length - 1) {
-      //   console.log('等待 2s 避免并发压力...');
-      //   await sleep(1); // 1秒延迟
-      // }
+      // Add delay to reduce concurrent pressure
+      if (i < batches.length - 1 && this.batchDelay > 0) {
+        console.log(`等待 ${this.batchDelay}s 避免并发压力...`);
+        await this.sleep(this.batchDelay);
+      }
     }
 
     this.printStats();
@@ -202,6 +203,10 @@ export class DataImporter {
         this.stats.failed++;
       }
     }
+  }
+
+  private sleep(seconds: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   }
 
   private printStats() {

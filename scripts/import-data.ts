@@ -7,7 +7,10 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Config, OrganizationData } from './types';
+import { Config, OrganizationData, ExtendedUserData } from './types';
+
+// Create WeakMap to store user data for organizations
+const userWeakMap = new WeakMap<OrganizationData, ExtendedUserData>();
 
 // Import refactored modules
 import { DataTransformer } from './transformers/data-transformer';
@@ -22,6 +25,7 @@ const CONFIG: Config = {
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
   BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
+  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'),
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
@@ -80,22 +84,9 @@ async function main(): Promise<void> {
           // Extract user data from the same row
           const userData = DataTransformer.transformUser(row);
 
-          // Attach original data and user info as non-enumerable properties
-          Object.defineProperty(organization, '_originalData', {
-            value: row,
-            enumerable: false,
-            writable: false,
-            configurable: false,
-          });
-
-          // Attach user data for later processing
+          // Attach user data for later processing using WeakMap
           if (userData) {
-            Object.defineProperty(organization, '_userData', {
-              value: userData,
-              enumerable: false,
-              writable: false,
-              configurable: false,
-            });
+            userWeakMap.set(organization, userData);
           }
 
           return organization;
@@ -120,7 +111,13 @@ async function main(): Promise<void> {
 
     // Initialize API client and importer
     const api = new StrapiAPI(CONFIG.STRAPI_URL, CONFIG.STRAPI_TOKEN);
-    importer = new DataImporter(api, CONFIG.BATCH_SIZE, CONFIG.DRY_RUN);
+    importer = new DataImporter(
+      api,
+      userWeakMap,
+      CONFIG.BATCH_SIZE,
+      CONFIG.BATCH_DELAY,
+      CONFIG.DRY_RUN,
+    );
 
     // Start import
     await importer.importOrganizations(organizations);
@@ -155,6 +152,7 @@ Strapi 数据导入工具 (增强版)
   EXCEL_FILE        Excel 文件路径 (默认: 教育公益开放式数据库.xlsx)
   SHEET_NAME        工作表名称 (默认: 使用第一个工作表)
   BATCH_SIZE        批次大小 (默认: 10)
+  BATCH_DELAY       批次间延迟秒数 (默认: 0, 表示无延迟)
   MAX_ROWS          最大导入行数 (默认: 0, 表示导入所有行)
   DRY_RUN           模拟模式 (true/false)
 
@@ -177,6 +175,9 @@ Strapi 数据导入工具 (增强版)
   
   # 仅测试前10行
   MAX_ROWS=10 DRY_RUN=true tsx import-data.ts
+  
+  # 设置批次间延迟
+  BATCH_DELAY=2 STRAPI_TOKEN=your_token tsx import-data.ts
 `);
     process.exit(0);
   }
