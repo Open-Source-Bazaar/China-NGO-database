@@ -87,26 +87,34 @@ export class DataImporter {
         // 如果有联系人用户，先创建用户
         if (cleanOrgData.contactUser) {
           try {
-            const createdUser = await this.api.createUser(
-              cleanOrgData.contactUser,
-            );
-            console.log(
-              `✓ 成功创建联系人用户: ${cleanOrgData.contactUser.username}`,
-            );
-
-            // 设置组织与用户的关联
-            const userId = (createdUser as any).id;
-            if (!userId) {
-              throw new Error(
-                `创建的用户缺少ID: ${cleanOrgData.contactUser.username}`,
-              );
+            // 验证用户数据
+            const contactUser = cleanOrgData.contactUser as any;
+            if (!contactUser.email || !contactUser.username) {
+              throw new Error('用户数据缺少必需字段：email 或 username');
             }
-            cleanOrgData.contactUser = userId;
-          } catch (userError: any) {
-            console.error(
-              `✗ 创建用户失败: ${cleanOrgData.contactUser.username}`,
-              userError.message,
+
+            // 检查用户是否已存在
+            const existingUser = await this.api.findUserByEmail(
+              contactUser.email,
             );
+            if (existingUser) {
+              console.log(`✓ 使用现有用户: ${contactUser.username}`);
+              cleanOrgData.contactUser = (existingUser as any).id;
+            } else {
+              const createdUser = await this.api.createUser(contactUser);
+              console.log(`✓ 成功创建联系人用户: ${contactUser.username}`);
+
+              // 设置组织与用户的关联
+              const userId = (createdUser as any).id;
+              if (!userId) {
+                throw new Error(`创建的用户缺少ID: ${contactUser.username}`);
+              }
+              cleanOrgData.contactUser = userId;
+            }
+          } catch (userError: any) {
+            const username =
+              (cleanOrgData.contactUser as any)?.username || 'unknown';
+            console.error(`✗ 用户操作失败: ${username}`, userError.message);
             this.logger.logFailed(org, userError);
             this.stats.failed++;
             continue;
