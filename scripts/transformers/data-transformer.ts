@@ -53,6 +53,6 @@ export class DataTransformer {
     organization: Organization,
     organizationId?: number,
   ): ExtendedUserData | null => {
-    return UserTransformer.transformUser(organization, organizationId);
+    return UserTransformer.transformUser(organization);
   };
 }

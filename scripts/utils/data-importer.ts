@@ -95,7 +95,13 @@ export class DataImporter {
             );
 
             // 设置组织与用户的关联
-            cleanOrgData.contactUser = (createdUser as any).id || createdUser;
+            const userId = (createdUser as any).id;
+            if (!userId) {
+              throw new Error(
+                `创建的用户缺少ID: ${cleanOrgData.contactUser.username}`,
+              );
+            }
+            cleanOrgData.contactUser = userId;
           } catch (userError: any) {
             console.error(
               `✗ 创建用户失败: ${cleanOrgData.contactUser.username}`,
