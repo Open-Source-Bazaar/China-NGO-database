@@ -4,7 +4,7 @@ import { OrganizationData, ImportStats, ExtendedUserData } from '../types';
 import { StrapiAPI } from './strapi-api';
 import { ImportLogger } from './import-logger';
 
-// 类型守卫函数
+// Type guard function
 function hasId(
   user: ExtendedUserData | null | undefined,
 ): user is ExtendedUserData & { id: number } {
@@ -46,7 +46,7 @@ export class DataImporter {
   }
 
   private async processBatch(organizations: OrganizationData[]): Promise<void> {
-    // 使用小型缓存避免内存问题
+    // Use small cache to avoid memory issues
     const smallCache = new Set<string>();
 
     for (const org of organizations) {
@@ -60,7 +60,7 @@ export class DataImporter {
       }
       const nameKey = org.name.trim();
 
-      // 检查小型缓存
+      // Check small cache
       if (smallCache.has(nameKey)) {
         console.log(`跳过批次内重复: ${nameKey}`);
         this.logger.logSkipped(org, '批次内重复');
@@ -68,17 +68,17 @@ export class DataImporter {
         continue;
       }
 
-      // 检查数据库中是否已存在（避免大内存缓存）
+      // Check if already exists in database (avoid large memory cache)
       const existing = await this.api.findOrganizationByName(nameKey);
       if (existing) {
         console.log(`跳过已存在的组织: ${nameKey}`);
         this.logger.logSkipped(org, '组织已存在');
         this.stats.skipped++;
-        smallCache.add(nameKey); // 添加到小型缓存
+        smallCache.add(nameKey); // Add to small cache
         continue;
       }
 
-      // 创建新组织
+      // Create new organization
       try {
         if (this.dryRun) {
           console.log(`[DRY RUN] 将创建组织: ${nameKey}`);
@@ -87,16 +87,16 @@ export class DataImporter {
           continue;
         }
 
-        // 清理数据，移除内部字段，并清除名称两边的空格
+        // Clean data, remove internal fields, and trim name whitespace
         const cleanOrgData: OrganizationData = { ...org, name: nameKey };
-        // 使用类型断言安全地移除内部字段
+        // Safely remove internal fields using type assertion
         if ('_originalData' in cleanOrgData) {
           delete (
             cleanOrgData as OrganizationData & { _originalData?: unknown }
           )._originalData;
         }
 
-        // 获取用户数据（从 _userData 属性）
+        // Get user data (from _userData property)
         let userData: ExtendedUserData | undefined;
         if ('_userData' in org) {
           userData = (
@@ -104,20 +104,20 @@ export class DataImporter {
           )._userData;
         }
 
-        // 如果有用户数据，创建用户并关联
+        // If user data exists, create user and associate
         if (userData) {
           try {
-            // 验证用户数据
+            // Validate user data
             if (!userData.email || !userData.username) {
               throw new Error('用户数据缺少必需字段：email 或 username');
             }
 
-            // 预验证用户名长度（Strapi通常限制50字符）
+            // Pre-validate username length (Strapi typically limits to 50 characters)
             if (userData.username.length > 50) {
               console.warn(
                 `⚠️ 用户名过长(${userData.username.length}字符)，跳过用户创建: ${userData.username}`,
               );
-              // 记录到日志，方便后续检查
+              // Log for later inspection
               const failedOrgForLog = {
                 ...org,
                 name: `[用户名过长] ${org.name} (用户名: ${userData.username})`,
@@ -131,7 +131,7 @@ export class DataImporter {
               console.warn(
                 `⚠️ 用户名包含特殊字符，跳过用户创建: ${userData.username}`,
               );
-              // 记录到日志，方便后续检查
+              // Log for later inspection
               const failedOrgForLog = {
                 ...org,
                 name: `[用户名特殊字符] ${org.name} (用户名: ${userData.username})`,
@@ -139,7 +139,7 @@ export class DataImporter {
               this.logger.logSkipped(failedOrgForLog, '用户名包含特殊字符');
               cleanOrgData.contactUser = null;
             } else {
-              // 检查用户是否已存在
+              // Check if user already exists
               const existingUser = await this.api.findUserByEmail(
                 userData.email,
               );
@@ -152,14 +152,14 @@ export class DataImporter {
                 const createdUser = await this.api.createUser(userData);
                 console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
-                // 验证创建的用户有ID
+                // Validate created user has ID
                 if (!hasId(createdUser)) {
                   throw new Error(`创建的用户缺少ID: ${userData.username}`);
                 }
                 userId = createdUser.id;
               }
 
-              // 设置组织与用户的关联
+              // Set organization-user association
               cleanOrgData.contactUser = userId;
             }
           } catch (userError: unknown) {
@@ -167,17 +167,17 @@ export class DataImporter {
               `✗ 用户创建失败: ${userData?.username || 'unknown'} (组织: ${org.name})`,
             );
 
-            // 记录用户创建失败到用户失败日志，但不阻止组织创建
+            // Log user creation failure to user failed log, but don't prevent organization creation
             const failedOrgForLog = {
               ...org,
               name: `${org.name} (用户名: ${userData.username})`,
             };
             this.logger.logUserFailed(failedOrgForLog, userError as Error);
             this.stats.failed++;
-            cleanOrgData.contactUser = null; // 设置为null，继续创建组织
+            cleanOrgData.contactUser = null; // Set to null, continue with organization creation
           }
         } else {
-          // 如果没有联系人用户，设置为null
+          // If no contact user, set to null
           cleanOrgData.contactUser = null;
         }
 
