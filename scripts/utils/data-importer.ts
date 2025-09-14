@@ -8,7 +8,13 @@ import { ImportLogger } from './import-logger';
 // Type guard function
 const hasId = (
   user: ExtendedUserData | null | undefined,
-): user is ExtendedUserData & { id: number } => typeof user?.id === 'number';
+): user is ExtendedUserData & { id: number } =>
+  !!(
+    user &&
+    typeof user.id === 'number' &&
+    Number.isInteger(user.id) &&
+    user.id > 0
+  );
 
 export class DataImporter {
   public logger: ImportLogger;
@@ -181,7 +187,10 @@ export class DataImporter {
               ...org,
               name: `${org.name} (用户名: ${userData.username})`,
             };
-            this.logger.logUserFailed(failedOrgForLog, userError as Error);
+            await this.logger.logUserFailed(
+              failedOrgForLog,
+              userError as Error,
+            );
             this.stats.failed++;
             cleanOrgData.contactUser = null; // Set to null, continue with organization creation
           }
