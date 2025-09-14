@@ -24,8 +24,8 @@ const CONFIG: Config = {
   STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
-  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'),
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'), // Default batch size
+  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'), // Default no delay
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
