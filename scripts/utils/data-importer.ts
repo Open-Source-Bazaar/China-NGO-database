@@ -60,7 +60,8 @@ export class DataImporter {
       this.stats.total++;
 
       const rawName = org.name ?? '';
-      const nameKey = rawName.trim();
+      const nameKey = rawName.trim(); // display name to persist
+      const cacheKey = nameKey.toLowerCase(); // dedupe key
       if (!nameKey) {
         console.log(`跳过无名称的组织`);
         this.logger.logSkipped(org, '无名称');
@@ -69,7 +70,7 @@ export class DataImporter {
       }
 
       // Check small cache
-      if (smallCache.has(nameKey)) {
+      if (smallCache.has(cacheKey)) {
         console.log(`跳过批次内重复: ${nameKey}`);
         this.logger.logSkipped(org, '批次内重复');
         this.stats.skipped++;
@@ -94,7 +95,7 @@ export class DataImporter {
         console.log(`跳过已存在的组织: ${nameKey}`);
         this.logger.logSkipped(org, '组织已存在');
         this.stats.skipped++;
-        smallCache.add(nameKey); // Add to small cache
+        smallCache.add(cacheKey); // Add to small cache
         continue;
       }
 
@@ -103,7 +104,7 @@ export class DataImporter {
         if (this.dryRun) {
           console.log(`[DRY RUN] 将创建组织: ${nameKey}`);
           this.stats.success++;
-          smallCache.add(nameKey);
+          smallCache.add(cacheKey);
           continue;
         }
 
@@ -202,7 +203,7 @@ export class DataImporter {
         await this.api.createOrganization(cleanOrgData);
         console.log(`✓ 成功创建组织: ${nameKey}`);
         this.stats.success++;
-        smallCache.add(nameKey);
+        smallCache.add(cacheKey);
       } catch (error: any) {
         console.error(`✗ 创建组织失败: ${nameKey}`, error.message);
 
