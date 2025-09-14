@@ -1,4 +1,4 @@
-import { splitArray } from 'web-utility';
+import { splitArray, sleep } from 'web-utility';
 import { randomBytes } from 'node:crypto';
 
 import { OrganizationData, ImportStats, ExtendedUserData } from '../types';
@@ -44,7 +44,7 @@ export class DataImporter {
       // Add delay to reduce concurrent pressure
       if (i < batches.length - 1 && this.batchDelay > 0) {
         console.log(`等待 ${this.batchDelay}s 避免并发压力...`);
-        await this.sleep(this.batchDelay);
+        await sleep(this.batchDelay * 1000); // web-utility's sleep uses milliseconds
       }
     }
 
@@ -204,10 +204,6 @@ export class DataImporter {
         this.stats.failed++;
       }
     }
-  }
-
-  private sleep(seconds: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   }
 
   private printStats() {
