@@ -151,7 +151,7 @@ export class DataImporter {
             } else {
               // Check if user already exists
               let existingUser = await this.api.findUserByEmail(
-                userData.email.toLowerCase(),
+                userData.email.trim().toLowerCase(),
               );
 
               let userId: number;
