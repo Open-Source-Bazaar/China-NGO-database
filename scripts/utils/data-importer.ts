@@ -71,7 +71,19 @@ export class DataImporter {
       }
 
       // Check if already exists in database (avoid large memory cache)
-      const existing = await this.api.findOrganizationByName(nameKey);
+      let existing: OrganizationData | undefined;
+      try {
+        existing = await this.api.findOrganizationByName(nameKey);
+      } catch (error: any) {
+        console.error(
+          `查重请求失败: ${nameKey}`,
+          error?.message || String(error),
+        );
+        await this.logger.logFailed(org, error);
+        this.stats.failed++;
+        continue;
+      }
+
       if (existing) {
         console.log(`跳过已存在的组织: ${nameKey}`);
         this.logger.logSkipped(org, '组织已存在');
