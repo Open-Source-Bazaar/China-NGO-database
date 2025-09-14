@@ -55,18 +55,12 @@ export class UserTransformer {
 
     const safeBase = cleanBaseUsername || 'user';
     // 生成带序号的用户名格式
-    const generateUsername = (suffix: string = ''): string => {
-      // 如果基础用户名就是组织名称（没有联系人），则直接使用组织名称
-      if (safeBase === orgCleanName) {
-        return `${safeBase}${suffix}`;
-      }
-      // 否则使用 基础用户名_组织名称 的格式
-      return `${safeBase}_${orgCleanName}${suffix}`;
-    };
-
     // 生成唯一用户名（序号从1开始）
     // 注意：这里只是生成用户名格式，实际唯一性检查在导入脚本中进行
-    let username = generateUsername();
+    let username = ((suffix: string = ''): string =>
+      safeBase === orgCleanName
+        ? `${safeBase}${suffix}`
+        : `${safeBase}_${orgCleanName}${suffix}`)();
 
     return {
       username,
