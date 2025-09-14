@@ -123,19 +123,17 @@ export class DataImporter {
             }
 
             // Normalize username: trim, strip disallowed chars, cap length; fallback to email local-part
-            userData.username = userData.username.trim();
-            userData.username = userData.username.replace(
-              /[｜（）()【】\[\]{}"'`]/g,
-              '',
-            );
+            userData.username = userData.username
+              .trim()
+              .replace(/[｜（）()【】\[\]{}"'`]/g, '');
             if (!userData.username) {
               const local = userData.email.trim().toLowerCase().split('@')[0];
               userData.username =
                 local.slice(0, 50) || `user_${randomBytes(6).toString('hex')}`;
             }
-            if (userData.username.length > 50) {
-              userData.username = userData.username.slice(0, 50);
-            }
+
+            userData.username = userData.username.slice(0, 50);
+
             {
               // Check if user already exists
               let existingUser = await this.api.findUserByEmail(
