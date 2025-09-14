@@ -19,6 +19,7 @@ const hasId = (
 export class DataImporter {
   public logger: ImportLogger;
   private stats: ImportStats;
+  private userCache: Map<string, number>;
 
   constructor(
     private api: StrapiAPI,
@@ -29,6 +30,7 @@ export class DataImporter {
   ) {
     this.logger = new ImportLogger();
     this.stats = { total: 0, success: 0, failed: 0, skipped: 0 };
+    this.userCache = new Map();
   }
 
   async importOrganizations(organizations: OrganizationData[]): Promise<void> {
@@ -135,17 +137,26 @@ export class DataImporter {
             userData.username = userData.username.slice(0, 50);
 
             {
-              // Check if user already exists
-              let existingUser = await this.api.findUserByEmail(
-                userData.email.trim().toLowerCase(),
-              );
+              // Check if user already exists in memory cache
+              const emailKey = userData.email.trim().toLowerCase();
+              const usernameKey = userData.username;
 
               let userId: number;
 
-              if (hasId(existingUser)) {
-                console.log(`✓ 使用现有用户: ${userData.username}`);
-                userId = existingUser.id;
+              if (this.userCache.has(emailKey)) {
+                // User already exists, use existing ID
+                userId = this.userCache.get(emailKey)!;
+                console.log(`✓ 使用现有用户: ${userData.username} (邮箱缓存)`);
+              } else if (this.userCache.has(usernameKey)) {
+                // User exists with different email but same username
+                userId = this.userCache.get(usernameKey)!;
+                console.log(
+                  `✓ 使用现有用户: ${userData.username} (用户名缓存)`,
+                );
+                // Also cache the email for future lookups
+                this.userCache.set(emailKey, userId);
               } else {
+                // Create new user
                 // Ensure password exists as a safety fallback
                 userData.password ||= randomBytes(18)
                   .toString('base64url')
@@ -159,6 +170,10 @@ export class DataImporter {
                   throw new Error(`创建的用户缺少ID: ${userData.username}`);
                 }
                 userId = createdUser.id;
+
+                // Cache both email and username for future lookups
+                this.userCache.set(emailKey, userId);
+                this.userCache.set(usernameKey, userId);
               }
 
               // Set organization-user association
