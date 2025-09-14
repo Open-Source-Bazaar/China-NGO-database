@@ -6,11 +6,9 @@ import { StrapiAPI } from './strapi-api';
 import { ImportLogger } from './import-logger';
 
 // Type guard function
-function hasId(
+const hasId = (
   user: ExtendedUserData | null | undefined,
-): user is ExtendedUserData & { id: number } {
-  return user !== null && user !== undefined && typeof user.id === 'number';
-}
+): user is ExtendedUserData & { id: number } => typeof user?.id === 'number';
 
 export class DataImporter {
   public logger: ImportLogger;
@@ -95,10 +93,7 @@ export class DataImporter {
         const cleanOrgData: OrganizationData = { ...org, name: nameKey };
 
         // Get user data from WeakMap
-        let userData: ExtendedUserData | undefined;
-        if (this.userWeakMap.has(org)) {
-          userData = this.userWeakMap.get(org);
-        }
+        let userData = this.userWeakMap.get(org);
 
         // If user data exists, create user and associate
         if (userData) {
@@ -136,13 +131,8 @@ export class DataImporter {
               cleanOrgData.contactUser = null;
             } else {
               // Check if user already exists
-              let existingUser: ExtendedUserData | null = null;
-              try {
-                existingUser = await this.api.findUserByEmail(userData.email);
-              } catch (error: any) {
-                console.warn(`查找用户失败: ${userData.email}`, error.message);
-                // Continue with user creation
-              }
+              let existingUser = await this.api.findUserByEmail(userData.email);
+
               let userId: number;
 
               if (hasId(existingUser)) {
@@ -150,11 +140,10 @@ export class DataImporter {
                 userId = existingUser.id;
               } else {
                 // Ensure password exists as a safety fallback
-                if (!userData.password) {
-                  userData.password = randomBytes(18)
-                    .toString('base64url')
-                    .slice(0, 24);
-                }
+                userData.password ||= randomBytes(18)
+                  .toString('base64url')
+                  .slice(0, 24);
+
                 const createdUser = await this.api.createUser(userData);
                 console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
