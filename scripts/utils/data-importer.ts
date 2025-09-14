@@ -64,7 +64,7 @@ export class DataImporter {
       const cacheKey = nameKey.toLowerCase(); // dedupe key
       if (!nameKey) {
         console.log(`跳过无名称的组织`);
-        this.logger.logSkipped(org, '无名称');
+        await this.logger.logSkipped(org, '无名称');
         this.stats.skipped++;
         continue;
       }
@@ -72,7 +72,7 @@ export class DataImporter {
       // Check small cache
       if (smallCache.has(cacheKey)) {
         console.log(`跳过批次内重复: ${nameKey}`);
-        this.logger.logSkipped(org, '批次内重复');
+        await this.logger.logSkipped(org, '批次内重复');
         this.stats.skipped++;
         continue;
       }
@@ -93,7 +93,7 @@ export class DataImporter {
 
       if (existing) {
         console.log(`跳过已存在的组织: ${nameKey}`);
-        this.logger.logSkipped(org, '组织已存在');
+        await this.logger.logSkipped(org, '组织已存在');
         this.stats.skipped++;
         smallCache.add(cacheKey); // Add to small cache
         continue;
@@ -122,33 +122,21 @@ export class DataImporter {
               throw new Error('用户数据缺少必需字段：email 或 username');
             }
 
-            // Pre-validate username length (Strapi typically limits to 50 characters)
+            // Normalize username: trim, strip disallowed chars, cap length; fallback to email local-part
+            userData.username = userData.username.trim();
+            userData.username = userData.username.replace(
+              /[｜（）()【】\[\]{}"'`]/g,
+              '',
+            );
+            if (!userData.username) {
+              const local = userData.email.trim().toLowerCase().split('@')[0];
+              userData.username =
+                local.slice(0, 50) || `user_${randomBytes(6).toString('hex')}`;
+            }
             if (userData.username.length > 50) {
-              console.warn(
-                `⚠️ 用户名过长(${userData.username.length}字符)，跳过用户创建: ${userData.username}`,
-              );
-              // Log for later inspection
-              const failedOrgForLog = {
-                ...org,
-                name: `[用户名过长] ${org.name} (用户名: ${userData.username})`,
-              };
-              this.logger.logSkipped(
-                failedOrgForLog,
-                `用户名过长(${userData.username.length}字符)`,
-              );
-              cleanOrgData.contactUser = null;
-            } else if (/[｜（）()【】\[\]{}"'`]/.test(userData.username)) {
-              console.warn(
-                `⚠️ 用户名包含特殊字符，跳过用户创建: ${userData.username}`,
-              );
-              // Log for later inspection
-              const failedOrgForLog = {
-                ...org,
-                name: `[用户名特殊字符] ${org.name} (用户名: ${userData.username})`,
-              };
-              this.logger.logSkipped(failedOrgForLog, '用户名包含特殊字符');
-              cleanOrgData.contactUser = null;
-            } else {
+              userData.username = userData.username.slice(0, 50);
+            }
+            {
               // Check if user already exists
               let existingUser = await this.api.findUserByEmail(
                 userData.email.trim().toLowerCase(),
@@ -212,7 +200,7 @@ export class DataImporter {
           ...org,
           name: `${org.name}`,
         };
-        this.logger.logFailed(failedOrgForLog, error);
+        await this.logger.logFailed(failedOrgForLog, error);
         this.stats.failed++;
       }
     }
