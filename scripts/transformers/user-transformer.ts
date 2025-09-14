@@ -53,14 +53,15 @@ export class UserTransformer {
       '',
     );
 
+    const safeBase = cleanBaseUsername || 'user';
     // 生成带序号的用户名格式
     const generateUsername = (suffix: string = ''): string => {
       // 如果基础用户名就是组织名称（没有联系人），则直接使用组织名称
-      if (cleanBaseUsername === orgCleanName) {
-        return `${cleanBaseUsername}${suffix}`;
+      if (safeBase === orgCleanName) {
+        return `${safeBase}${suffix}`;
       }
       // 否则使用 基础用户名_组织名称 的格式
-      return `${cleanBaseUsername}_${orgCleanName}${suffix}`;
+      return `${safeBase}_${orgCleanName}${suffix}`;
     };
 
     // 生成唯一用户名（序号从1开始）
@@ -74,15 +75,14 @@ export class UserTransformer {
       confirmed: false, // 不需要确认
       blocked: true, // 阻止登录
       provider: 'local',
-      phone: contactPhone || undefined,
+      phone: contactPhone.replace(/\D/g, '') || undefined,
       // 设置默认角色（通常 authenticated 用户角色的 ID 是 1）
       role: 1,
     } as ExtendedUserData;
   };
 
-  static extractPrincipalName = (organization: Organization): string => {
-    return organization['负责人'] || '';
-  };
+  static extractPrincipalName = (organization: Organization): string =>
+    String(organization['负责人'] ?? '').trim();
 
   static extractContactInfo = (
     organization: Organization,
@@ -92,9 +92,11 @@ export class UserTransformer {
     email: string;
   } => {
     return {
-      name: organization['机构联系人联系人姓名'] || '',
-      phone: organization['机构联系人联系人电话'] || '',
-      email: organization['机构联系人联系人邮箱'] || '',
+      name: String(organization['机构联系人联系人姓名'] ?? '').trim(),
+      phone: String(organization['机构联系人联系人电话'] ?? '').trim(),
+      email: String(organization['机构联系人联系人邮箱'] ?? '')
+        .trim()
+        .toLowerCase(),
     };
   };
 }

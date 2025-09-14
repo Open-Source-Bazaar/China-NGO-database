@@ -43,7 +43,7 @@ export class DataImporter {
     }
 
     this.printStats();
-    this.logger.saveToFiles();
+    await this.logger.saveToFiles();
   }
 
   private async processBatch(organizations: OrganizationData[]): Promise<void> {
@@ -131,7 +131,9 @@ export class DataImporter {
               cleanOrgData.contactUser = null;
             } else {
               // Check if user already exists
-              let existingUser = await this.api.findUserByEmail(userData.email);
+              let existingUser = await this.api.findUserByEmail(
+                userData.email.toLowerCase(),
+              );
 
               let userId: number;
 
