@@ -136,49 +136,40 @@ export class DataImporter {
 
             userData.username = userData.username.slice(0, 50);
 
-            {
-              // Check if user already exists in memory cache
-              const emailKey = userData.email.trim().toLowerCase();
-              const usernameKey = userData.username;
+            // Check if user already exists in memory cache
+            const emailKey = userData.email.trim().toLowerCase();
+            const usernameKey = userData.username;
 
-              let userId: number;
+            let userId =
+              this.userCache.get(emailKey) || this.userCache.get(usernameKey);
+            if (userId) {
+              // User already exists, use existing ID
+              console.log(`✓ 使用现有用户: ${userData.username}`);
+              // Also cache the email for future lookups if not already cached
+              this.userCache.set(emailKey, userId);
+            } else {
+              // Create new user
+              // Ensure password exists as a safety fallback
+              userData.password ||= randomBytes(18)
+                .toString('base64url')
+                .slice(0, 24);
 
-              if (this.userCache.has(emailKey)) {
-                // User already exists, use existing ID
-                userId = this.userCache.get(emailKey)!;
-                console.log(`✓ 使用现有用户: ${userData.username} (邮箱缓存)`);
-              } else if (this.userCache.has(usernameKey)) {
-                // User exists with different email but same username
-                userId = this.userCache.get(usernameKey)!;
-                console.log(
-                  `✓ 使用现有用户: ${userData.username} (用户名缓存)`,
-                );
-                // Also cache the email for future lookups
-                this.userCache.set(emailKey, userId);
-              } else {
-                // Create new user
-                // Ensure password exists as a safety fallback
-                userData.password ||= randomBytes(18)
-                  .toString('base64url')
-                  .slice(0, 24);
+              const createdUser = await this.api.createUser(userData);
+              console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
-                const createdUser = await this.api.createUser(userData);
-                console.log(`✓ 成功创建联系人用户: ${userData.username}`);
-
-                // Validate created user has ID
-                if (!hasId(createdUser)) {
-                  throw new Error(`创建的用户缺少ID: ${userData.username}`);
-                }
-                userId = createdUser.id;
-
-                // Cache both email and username for future lookups
-                this.userCache.set(emailKey, userId);
-                this.userCache.set(usernameKey, userId);
+              // Validate created user has ID
+              if (!hasId(createdUser)) {
+                throw new Error(`创建的用户缺少ID: ${userData.username}`);
               }
+              userId = createdUser.id;
 
-              // Set organization-user association
-              cleanOrgData.contactUser = userId;
+              // Cache both email and username for future lookups
+              this.userCache.set(emailKey, userId);
+              this.userCache.set(usernameKey, userId);
             }
+
+            // Set organization-user association
+            cleanOrgData.contactUser = userId;
           } catch (userError: unknown) {
             console.error(
               `✗ 用户创建失败: ${userData?.username || 'unknown'} (组织: ${org.name})`,
