@@ -138,18 +138,14 @@ export class DataImporter {
 
             // Check if user already exists in memory cache
             const emailKey = userData.email.trim().toLowerCase();
-            const usernameKey = userData.username;
+            const usernameKey = userData.username.trim().toLowerCase();
 
+            // Check if user already exists in cache
             let userId =
               this.userCache.get(emailKey) || this.userCache.get(usernameKey);
-            if (userId) {
-              // User already exists, use existing ID
-              console.log(`✓ 使用现有用户: ${userData.username}`);
-              // Also cache the email for future lookups if not already cached
-              this.userCache.set(emailKey, userId);
-            } else {
-              // Create new user
-              // Ensure password exists as a safety fallback
+
+            if (!userId) {
+              // Create new user if not found
               userData.password ||= randomBytes(18)
                 .toString('base64url')
                 .slice(0, 24);
@@ -157,16 +153,17 @@ export class DataImporter {
               const createdUser = await this.api.createUser(userData);
               console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
-              // Validate created user has ID
               if (!hasId(createdUser)) {
                 throw new Error(`创建的用户缺少ID: ${userData.username}`);
               }
               userId = createdUser.id;
-
-              // Cache both email and username for future lookups
-              this.userCache.set(emailKey, userId);
-              this.userCache.set(usernameKey, userId);
+            } else {
+              console.log(`✓ 使用现有用户: ${userData.username}`);
             }
+
+            // Cache both keys for future lookups
+            this.userCache.set(emailKey, userId);
+            this.userCache.set(usernameKey, userId);
 
             // Set organization-user association
             cleanOrgData.contactUser = userId;
