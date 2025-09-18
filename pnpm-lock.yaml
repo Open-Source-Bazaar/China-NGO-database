@@ -81,12 +81,9 @@ importers:
       lint-staged:
         specifier: ^16.1.6
         version: 16.1.6
-      mobx-restful:
-        specifier: ^2.1.2
-        version: 2.1.2(mobx@6.13.7)(typescript@5.9.2)
       mobx-strapi:
-        specifier: ^0.7.5
-        version: 0.7.5(typescript@5.9.2)
+        specifier: ^0.8.1
+        version: 0.8.1(typescript@5.9.2)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -4773,8 +4770,8 @@ packages:
     peerDependencies:
       mobx: '>=6.11'
 
-  mobx-strapi@0.7.5:
-    resolution: {integrity: sha512-E0bWXmwSBjmJUldrZvsYTOCgFY++/9iI2/zYk2wuGYyJtowGHrywC50AmnqWkiGWK/t8engDUDq4599SjS34hQ==}
+  mobx-strapi@0.8.1:
+    resolution: {integrity: sha512-iT6JP43W3XlJ6FW0z063gJ/1DTX3/9pp0SsC/O6KPdo+B8aMSFjoH6hx47vuWrESSCoGx57SPVtSQIxMjIl5ag==}
 
   mobx@6.13.7:
     resolution: {integrity: sha512-aChaVU/DO5aRPmk1GX8L+whocagUUpBQqoPtJk+cm7UOXUk87J4PeWCh6nNmTTIfEhiR9DI/+FnA8dln/hTK7g==}
@@ -12512,7 +12509,7 @@ snapshots:
       - jsdom
       - typescript
 
-  mobx-strapi@0.7.5(typescript@5.9.2):
+  mobx-strapi@0.8.1(typescript@5.9.2):
     dependencies:
       '@swc/helpers': 0.5.17
       idb-keyval: 6.2.2
