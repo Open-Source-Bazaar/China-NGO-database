@@ -1,0 +1,96 @@
+import { randomBytes } from 'node:crypto';
+
+import { ExtendedUserData, Organization } from '../types';
+
+export class UserTransformer {
+  static transformUser = (
+    organization: Organization,
+  ): ExtendedUserData | null => {
+    // 获取用户信息
+    const contactName = String(
+      organization['机构联系人联系人姓名'] ?? '',
+    ).trim();
+    const contactPhone = String(
+      organization['机构联系人联系人电话'] ?? '',
+    ).trim();
+    const contactEmail = String(organization['机构联系人联系人邮箱'] ?? '')
+      .trim()
+      .toLowerCase()
+      .split(/[^\w-@.]+/)[0];
+    const principalName = String(organization['负责人'] ?? '').trim();
+
+    // 检查是否有联系方式（邮箱或手机）
+    const hasValidEmail = contactEmail.includes('@');
+    const phoneDigits = contactPhone.replace(/\D/g, '');
+    const hasValidPhone = phoneDigits.length > 0;
+
+    // 如果没有任何联系方式，则不创建用户
+    if (!hasValidEmail && !hasValidPhone) {
+      return null;
+    }
+
+    // 生成邮箱：优先使用真实邮箱，如果没有则用手机号生成系统邮箱
+    let email: string;
+    if (hasValidEmail) {
+      email = contactEmail;
+    } else {
+      // 生成不可投递的占位邮箱（仅用于存储联系信息）
+      const local = phoneDigits || `u${Date.now().toString(36).slice(-6)}`;
+      email = `${local}@example.invalid`;
+    }
+
+    // 生成用户名：优先使用联系人姓名，没有则使用负责人，最后使用组织名
+    const organizationName = organization['常用名称'] || organization.name;
+    const baseUsername =
+      contactName || principalName || organizationName || `user_${Date.now()}`;
+
+    // 生成唯一的用户名：基础用户名 + 组织名称（确保唯一性）
+    const orgCleanName = organizationName
+      ? organizationName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
+      : 'org';
+
+    // 清理用户名，移除特殊字符
+    const cleanBaseUsername = baseUsername.replace(
+      /[^a-zA-Z0-9\u4e00-\u9fa5]/g,
+      '',
+    );
+
+    const safeBase = cleanBaseUsername || 'user';
+    // 生成带序号的用户名格式
+    // 生成唯一用户名（序号从1开始）
+    // 注意：这里只是生成用户名格式，实际唯一性检查在导入脚本中进行
+    let username = ((suffix: string = ''): string =>
+      safeBase === orgCleanName
+        ? `${safeBase}${suffix}`
+        : `${safeBase}_${orgCleanName}${suffix}`)();
+
+    return {
+      username,
+      email,
+      password: randomBytes(18).toString('base64url').slice(0, 24), // 强随机密码
+      confirmed: false, // 不需要确认
+      blocked: true, // 阻止登录
+      provider: 'local',
+      phone: contactPhone.replace(/\D/g, '') || undefined,
+      // 设置默认角色（通常 authenticated 用户角色的 ID 是 1）
+      role: 1,
+    } as ExtendedUserData;
+  };
+
+  static extractPrincipalName = (organization: Organization): string =>
+    String(organization['负责人'] ?? '').trim();
+
+  static extractContactInfo = (
+    organization: Organization,
+  ): {
+    name: string;
+    phone: string;
+    email: string;
+  } => ({
+    name: String(organization['机构联系人联系人姓名'] ?? '').trim(),
+    phone: String(organization['机构联系人联系人电话'] ?? '').trim(),
+    email: String(organization['机构联系人联系人邮箱'] ?? '')
+      .trim()
+      .toLowerCase(),
+  });
+}

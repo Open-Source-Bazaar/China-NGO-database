@@ -8,18 +8,16 @@
     "description": "NGO 核心信息"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
     "name": {
       "type": "string",
-      "required": true,
-      "unique": true
+      "required": true
     },
     "code": {
-      "type": "string",
-      "unique": true
+      "type": "string"
     },
     "contactUser": {
       "type": "relation",
