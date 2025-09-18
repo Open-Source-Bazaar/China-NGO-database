@@ -14,6 +14,7 @@ const userWeakMap = new WeakMap<OrganizationData, ExtendedUserData>();
 
 // Import refactored modules
 import { DataTransformer } from './transformers/data-transformer';
+import { UserTransformer } from './transformers/user-transformer';
 import { ExcelReader } from './utils/excel-reader';
 import { StrapiAPI } from './utils/strapi-api';
 import { DataImporter } from './utils/data-importer';
@@ -82,7 +83,7 @@ async function main(): Promise<void> {
           const organization = DataTransformer.transformOrganization(row);
 
           // Extract user data from the same row
-          const userData = DataTransformer.transformUser(row);
+          const userData = UserTransformer.transformUser(row);
 
           // Attach user data for later processing using WeakMap
           if (userData) {

@@ -2,7 +2,7 @@ import { splitArray, sleep } from 'web-utility';
 import { randomBytes } from 'node:crypto';
 
 import { OrganizationData, ImportStats, ExtendedUserData } from '../types';
-import { StrapiAPI } from './strapi-api';
+import { Organization, StrapiAPI } from './strapi-api';
 import { ImportLogger } from './import-logger';
 
 // Type guard function
@@ -80,9 +80,11 @@ export class DataImporter {
       }
 
       // Check if already exists in database (avoid large memory cache)
-      let existing: OrganizationData | undefined;
+      let existing: Organization | undefined;
       try {
-        existing = await this.api.findOrganizationByName(nameKey);
+        [existing] = await this.api.organizationStore.getList({
+          name: nameKey,
+        });
       } catch (error: any) {
         console.error(
           `查重请求失败: ${nameKey}`,
@@ -150,7 +152,8 @@ export class DataImporter {
                 .toString('base64url')
                 .slice(0, 24);
 
-              const createdUser = await this.api.createUser(userData);
+              const createdUser = await this.api.userStore.updateOne(userData);
+
               console.log(`✓ 成功创建联系人用户: ${userData.username}`);
 
               if (!hasId(createdUser)) {
@@ -189,7 +192,8 @@ export class DataImporter {
           cleanOrgData.contactUser = null;
         }
 
-        await this.api.createOrganization(cleanOrgData);
+        await this.api.organizationStore.updateOne(cleanOrgData);
+
         console.log(`✓ 成功创建组织: ${nameKey}`);
         this.stats.success++;
         smallCache.add(cacheKey);

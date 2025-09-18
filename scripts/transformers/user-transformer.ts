@@ -1,5 +1,6 @@
-import { ExtendedUserData, Organization } from '../types';
 import { randomBytes } from 'node:crypto';
+
+import { ExtendedUserData, Organization } from '../types';
 
 export class UserTransformer {
   static transformUser = (
@@ -84,13 +85,11 @@ export class UserTransformer {
     name: string;
     phone: string;
     email: string;
-  } => {
-    return {
-      name: String(organization['机构联系人联系人姓名'] ?? '').trim(),
-      phone: String(organization['机构联系人联系人电话'] ?? '').trim(),
-      email: String(organization['机构联系人联系人邮箱'] ?? '')
-        .trim()
-        .toLowerCase(),
-    };
-  };
+  } => ({
+    name: String(organization['机构联系人联系人姓名'] ?? '').trim(),
+    phone: String(organization['机构联系人联系人电话'] ?? '').trim(),
+    email: String(organization['机构联系人联系人邮箱'] ?? '')
+      .trim()
+      .toLowerCase(),
+  });
 }

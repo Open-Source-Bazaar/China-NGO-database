@@ -1,30 +1,24 @@
-import { HTTPClient } from 'koajax';
+import { Context, HTTPClient } from 'koajax';
+import { Base, StrapiListModel } from 'mobx-strapi';
 
-import { OrganizationData, ExtendedUserData } from '../types';
+import { Organization, UsersPermissionsUser as User } from '../../types';
 
-// 定义更精确的 API 响应类型
-interface StrapiResponse<T> {
-  data: T;
-  meta?: {
-    pagination?: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
+export { Organization, User };
+
+export class UserModel extends StrapiListModel<User & Base> {
+  baseURI = 'users';
+
+  constructor(public client: HTTPClient<Context>) {
+    super();
+  }
 }
 
-interface StrapiListResponse<T> {
-  data: T[];
-  meta?: {
-    pagination?: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
+export class OrganizationModel extends StrapiListModel<Organization & Base> {
+  baseURI = 'organizations';
+
+  constructor(public client: HTTPClient<Context>) {
+    super();
+  }
 }
 
 export class StrapiAPI {
@@ -39,68 +33,11 @@ export class StrapiAPI {
     request.headers = {
       Authorization: `Bearer ${this.token}`,
       ...request.headers,
+      'Strapi-Response-Format': 'v4',
     };
     return next();
   });
 
-  async createOrganization(data: OrganizationData): Promise<OrganizationData> {
-    const { body } = await this.client.post<StrapiResponse<OrganizationData>>(
-      '/api/organizations',
-      { data },
-    );
-    return body.data;
-  }
-
-  async findOrganizationByName(
-    name: string,
-  ): Promise<OrganizationData | undefined> {
-    const { body } = await this.client.get<
-      StrapiListResponse<OrganizationData>
-    >(`/api/organizations?filters[name][$eq]=${encodeURIComponent(name)}`);
-    return body.data?.[0];
-  }
-
-  async findUserByEmail(email: string): Promise<ExtendedUserData | undefined> {
-    try {
-      const { body } = await this.client.get<
-        StrapiListResponse<ExtendedUserData>
-      >(`/api/users?filters[email][$eq]=${encodeURIComponent(email)}`);
-      return body.data?.[0];
-    } catch (error) {
-      // 如果查询失败，返回undefined表示用户不存在
-      return undefined;
-    }
-  }
-
-  async createUser(userData: ExtendedUserData): Promise<ExtendedUserData> {
-    const { body } = await this.client.post<ExtendedUserData>(
-      '/api/users',
-      userData,
-    );
-    return body;
-  }
-
-  async findOrganizationByCode(
-    code: string,
-  ): Promise<OrganizationData | undefined> {
-    try {
-      const { body } = await this.client.get<
-        StrapiListResponse<OrganizationData>
-      >(`/api/organizations?filters[code][$eq]=${encodeURIComponent(code)}`);
-      return body.data?.[0];
-    } catch (error) {
-      return undefined;
-    }
-  }
-
-  async updateOrganizationContactUser(
-    organizationId: number,
-    userId: number,
-  ): Promise<any> {
-    const { body } = await this.client.put<StrapiResponse<any>>(
-      `/api/organizations/${organizationId}`,
-      { data: { contactUser: userId } },
-    );
-    return body.data;
-  }
+  userStore = new UserModel(this.client);
+  organizationStore = new OrganizationModel(this.client);
 }

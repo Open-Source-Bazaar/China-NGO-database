@@ -44,7 +44,7 @@ type BaseOrganizationData = Omit<
 >;
 type ExtendedOrganizationData = BaseOrganizationData & {
   // contactUser 可以是用户对象（用于创建）或用户ID（用于引用）
-  contactUser?: ExtendedUserData | number | null;
+  contactUser?: number | null;
 };
 export type OrganizationData = ExtendedOrganizationData;
 
