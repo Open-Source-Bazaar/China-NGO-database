@@ -82,9 +82,11 @@ export class DataImporter {
       // Check if already exists in database (avoid large memory cache)
       let existing: Organization | undefined;
       try {
-        [existing] = await this.api.organizationStore.getList({
-          name: nameKey,
-        });
+        [existing] = await this.api.organizationStore.getList(
+          { name: nameKey },
+          1,
+          1,
+        );
       } catch (error: any) {
         console.error(
           `查重请求失败: ${nameKey}`,

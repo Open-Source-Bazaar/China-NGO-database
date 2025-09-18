@@ -15,7 +15,8 @@ export class UserTransformer {
     ).trim();
     const contactEmail = String(organization['机构联系人联系人邮箱'] ?? '')
       .trim()
-      .toLowerCase();
+      .toLowerCase()
+      .split(/[^\w-@.]+/)[0];
     const principalName = String(organization['负责人'] ?? '').trim();
 
     // 检查是否有联系方式（邮箱或手机）

@@ -81,6 +81,9 @@ importers:
       lint-staged:
         specifier: ^16.1.6
         version: 16.1.6
+      mobx-restful:
+        specifier: ^2.1.2
+        version: 2.1.2(mobx@6.13.7)(typescript@5.9.2)
       mobx-strapi:
         specifier: ^0.7.5
         version: 0.7.5(typescript@5.9.2)

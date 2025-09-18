@@ -105,7 +105,7 @@ export class ImportLogger {
         registrationCountry: orgData.registrationCountry,
       },
       error: error.message,
-      errorDetails: error.response?.data || error.stack,
+      errorDetails: error.response?.body?.error || error.stack,
     };
 
     // Append to log file immediately
