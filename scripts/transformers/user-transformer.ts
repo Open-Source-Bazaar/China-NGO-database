@@ -1,11 +1,9 @@
 import { randomBytes } from 'node:crypto';
 
-import { ExtendedUserData, Organization } from '../types';
+import { TargetUser, SourceOrganization } from '../types';
 
 export class UserTransformer {
-  static transformUser = (
-    organization: Organization,
-  ): ExtendedUserData | null => {
+  static transformUser = (organization: SourceOrganization) => {
     // 获取用户信息
     const contactName = String(
       organization['机构联系人联系人姓名'] ?? '',
@@ -40,7 +38,7 @@ export class UserTransformer {
     }
 
     // 生成用户名：优先使用联系人姓名，没有则使用负责人，最后使用组织名
-    const organizationName = organization['常用名称'] || organization.name;
+    const organizationName = organization['常用名称'];
     const baseUsername =
       contactName || principalName || organizationName || `user_${Date.now()}`;
 
@@ -74,14 +72,14 @@ export class UserTransformer {
       phone: contactPhone.replace(/\D/g, '') || undefined,
       // 设置默认角色（通常 authenticated 用户角色的 ID 是 1）
       role: 1,
-    } as ExtendedUserData;
+    } as Partial<TargetUser>;
   };
 
-  static extractPrincipalName = (organization: Organization): string =>
+  static extractPrincipalName = (organization: SourceOrganization): string =>
     String(organization['负责人'] ?? '').trim();
 
   static extractContactInfo = (
-    organization: Organization,
+    organization: SourceOrganization,
   ): {
     name: string;
     phone: string;

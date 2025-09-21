@@ -5,14 +5,13 @@
  * Support import NGO organization data from Excel file to Strapi database
  */
 
-import * as fs from 'node:fs';
 import { RestMigrator } from 'mobx-restful-migrator';
 
+import { migrationMapping } from './transformers/data-transformer';
+import { Config } from './types';
 import { ExcelReader } from './utils/excel-reader';
-import { Config, SourceOrganization } from './types';
-import { TargetOrganizationModel } from './utils/strapi-api';
-import { migrationMapping } from './migration/organization-mapping';
 import { ImportLogger } from './utils/import-logger';
+import { TargetOrganizationModel } from './utils/strapi-api';
 
 // Configuration
 const CONFIG: Config = {
@@ -27,27 +26,11 @@ const CONFIG: Config = {
 };
 
 // Data source generator function
-async function* loadOrganizationData(): AsyncGenerator<SourceOrganization> {
+async function* loadOrganizationData() {
   console.log(`正在读取 Excel 文件: ${CONFIG.EXCEL_FILE}`);
 
-  if (!fs.existsSync(CONFIG.EXCEL_FILE)) {
-    throw new Error(`Excel 文件不存在: ${CONFIG.EXCEL_FILE}`);
-  }
-
   // Use existing Excel reader
-  const rawOrganizations = ExcelReader.readExcelFile(
-    CONFIG.EXCEL_FILE,
-    CONFIG.SHEET_NAME,
-  );
-
-  if (CONFIG.MAX_ROWS > 0) {
-    rawOrganizations.splice(CONFIG.MAX_ROWS);
-  }
-
-  console.log(`从 Excel 读取到 ${rawOrganizations.length} 条记录`);
-
-  // Yield each organization from existing reader
-  yield* rawOrganizations;
+  yield* ExcelReader.readExcelFile(CONFIG.EXCEL_FILE, CONFIG.SHEET_NAME);
 }
 
 // Main function
@@ -100,22 +83,17 @@ async function main(): Promise<void> {
 
     // Print final statistics
     logger.printStats();
-    
+
     console.log('\n导入完成！');
 
     // Save logs to files
     await logger.saveToFiles();
-
   } catch (error: any) {
     console.error('导入失败:', error.message);
-    if (error.stack) {
-      console.error('错误堆栈:', error.stack);
-    }
-    
-    if (logger) {
-      await logger.saveToFiles();
-    }
-    
+    console.error('错误堆栈:', error.stack);
+
+    await logger?.saveToFiles();
+
     process.exit(1);
   }
 }
@@ -169,8 +147,5 @@ Strapi 数据导入工具
   }
 }
 
-// Entry point
-if (require.main === module) {
-  parseArgs();
-  main();
-}
+parseArgs();
+main();

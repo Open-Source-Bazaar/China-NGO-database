@@ -1,10 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { MigrationEventBus, MigrationProgress } from 'mobx-restful-migrator';
+
 import { TargetOrganization, LogEntry, SourceOrganization } from '../types';
 import { LOG_CONSTANTS } from '../constants';
 
-export class ImportLogger implements MigrationEventBus<SourceOrganization, TargetOrganization> {
+export class ImportLogger
+  implements MigrationEventBus<SourceOrganization, TargetOrganization>
+{
   private timestamp: string;
   private logDir: string;
   private failedFile: string;
@@ -179,50 +182,56 @@ export class ImportLogger implements MigrationEventBus<SourceOrganization, Targe
     };
   }
 
-  // MigrationEventBus interface methods
-  async save({ index, sourceItem, targetItem }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+  async save({
+    index,
+    sourceItem,
+    targetItem,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
     this.#stats.total++;
     this.#stats.success++;
-    
-    console.log(`✅ [${index}] 成功导入: ${targetItem?.name || sourceItem?.常用名称 || 'Unknown'}`);
-    
-    // Log detailed information if needed
-    if (process.env.VERBOSE_LOGGING === 'true') {
-      console.log(`   源数据: ${sourceItem?.常用名称} (${sourceItem?.实体类型})`);
-      console.log(`   目标: ID=${targetItem?.id}, 类型=${targetItem?.entityType}\n`);
-    }
+
+    const { id, name, entityType } = targetItem as TargetOrganization;
+
+    console.log(
+      `✅ [${index}] 成功导入: ${name || sourceItem?.常用名称 || 'Unknown'}`,
+    );
+    if (process.env.VERBOSE_LOGGING === 'true')
+      console.log(`
+    源数据: ${sourceItem?.常用名称} (${sourceItem?.实体类型})
+    目标: ID=${id}, 类型=${entityType}
+`);
   }
 
-  async skip({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+  async skip({
+    index,
+    sourceItem,
+    error,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
     this.#stats.total++;
     this.#stats.skipped++;
     this.skippedCount++;
 
-    console.log(`⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
-
-    // Use original source data for logging
-    if (sourceItem) {
-      await this.logSkipped(
-        sourceItem as any, // Use source data directly
-        error?.message || '数据跳过'
-      );
-    }
+    console.log(
+      `⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
+    );
+    if (sourceItem)
+      await this.logSkipped(sourceItem as any, error?.message || '数据跳过');
   }
 
-  async error({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+  async error({
+    index,
+    sourceItem,
+    error,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
     this.#stats.total++;
     this.#stats.failed++;
     this.orgFailedCount++;
 
-    console.error(`❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
-
-    // Use original source data for logging
-    if (sourceItem) {
-      await this.logFailed(
-        sourceItem as any, // Use source data directly
-        error || new Error('未知错误')
-      );
-    }
+    console.error(
+      `❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
+    );
+    if (sourceItem)
+      await this.logFailed(sourceItem as any, error || new Error('未知错误'));
   }
 
   // Get migration statistics
@@ -234,7 +243,7 @@ export class ImportLogger implements MigrationEventBus<SourceOrganization, Targe
   printStats() {
     const { total, success, failed, skipped } = this.#stats;
     const successRate = ((success / total) * 100).toFixed(1);
-    
+
     console.log(`
 === 迁移统计 ===
 总数: ${total}

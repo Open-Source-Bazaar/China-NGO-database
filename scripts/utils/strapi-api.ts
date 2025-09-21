@@ -1,7 +1,8 @@
 import { HTTPClient } from 'koajax';
+import { NewData } from 'mobx-restful';
 import { StrapiListModel, UserModel } from 'mobx-strapi';
 
-import type { ApiOrganizationOrganization, PluginUsersPermissionsUser as User } from '../../types/generated/contentTypes';
+import { TargetOrganization, TargetUser } from '../types';
 
 const { STRAPI_API_URL, STRAPI_TOKEN } = process.env;
 
@@ -17,18 +18,16 @@ export const strapiClient = new HTTPClient({
   return next();
 });
 
-// Organization model
-export class TargetOrganizationModel extends StrapiListModel<ApiOrganizationOrganization> {
+export class TargetOrganizationModel extends StrapiListModel<TargetOrganization> {
   baseURI = 'organizations';
   client = strapiClient;
 }
 
-// User model
-export class TargetUserModel extends UserModel {
+export class TargetUserModel extends UserModel<TargetUser> {
   baseURI = 'users';
   client = strapiClient;
 
-  override async updateOne(data: Partial<User>, id?: number) {
+  override async updateOne(data: Partial<NewData<TargetUser>>, id?: number) {
     const userData = {
       ...data,
       role: data.role || 1,

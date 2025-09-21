@@ -2,8 +2,12 @@
  * 类型定义模块
  * 集中管理所有接口和类型定义
  */
-import type { ApiOrganizationOrganization } from '../types/generated/contentTypes';
-import type { PluginUsersPermissionsUser, PluginUsersPermissionsRole } from '../types/generated/contentTypes';
+import { Base, BaseUser } from 'mobx-strapi';
+import {
+  Organization,
+  UsersPermissionsRole,
+  UsersPermissionsUser,
+} from '../types';
 
 // 配置接口
 export interface Config {
@@ -22,11 +26,24 @@ export {
   ServiceOrganizationServiceComponent as Service,
   ContactInternetContactComponent as InternetContact,
   QualificationCertificateComponent as Qualification,
-} from '../types/generated/components';
+} from '../types';
+
+// 目标数据类型 (Strapi英文字段)
+export type TargetOrganization = Organization & Base;
+
+// 扩展的用户数据接口（包含自定义字段）
+export type TargetUser = UsersPermissionsUser &
+  BaseUser & {
+    // 自定义字段
+    phone?: string;
+    // 其他可能需要的字段
+    password?: string;
+    // 角色可以是ID或完整对象
+    role?: UsersPermissionsRole;
+  };
 
 // 源数据类型 (Excel中文字段)
 export interface SourceOrganization {
-  [key: string]: any;
   常用名称?: string;
   机构信用代码?: string;
   实体类型?: string;
@@ -44,23 +61,6 @@ export interface SourceOrganization {
   机构联系人联系人姓名?: string;
   机构联系人联系人电话?: string;
   机构联系人联系人邮箱?: string;
-}
-
-// 目标数据类型 (Strapi英文字段)
-export interface TargetOrganization extends Omit<ApiOrganizationOrganization, 'contactUser'> {
-  contactUser?: number | null;
-}
-
-// 扩展的用户数据接口（包含自定义字段）
-export interface ExtendedUserData extends Omit<PluginUsersPermissionsUser, 'id'> {
-  // 用户创建时不需要ID，但可以包含其他可选字段
-  id?: number;
-  // 自定义字段
-  phone?: string;
-  // 其他可能需要的字段
-  password?: string;
-  // 角色可以是ID或完整对象
-  role?: number | PluginUsersPermissionsRole;
 }
 
 // 导入统计接口

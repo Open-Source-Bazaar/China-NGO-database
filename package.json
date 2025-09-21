@@ -9,11 +9,11 @@
   "dependencies": {
     "@arshiash80/strapi-plugin-iconhub": "^1.1.1",
     "@ckeditor/strapi-plugin-ckeditor": "^1.1.1",
-    "@strapi/plugin-cloud": "~5.23.5",
-    "@strapi/plugin-color-picker": "~5.23.5",
-    "@strapi/plugin-documentation": "~5.23.5",
-    "@strapi/plugin-users-permissions": "~5.23.5",
-    "@strapi/strapi": "~5.23.5",
+    "@strapi/plugin-cloud": "~5.23.6",
+    "@strapi/plugin-color-picker": "~5.23.6",
+    "@strapi/plugin-documentation": "~5.23.6",
+    "@strapi/plugin-users-permissions": "~5.23.6",
+    "@strapi/strapi": "~5.23.6",
     "better-sqlite3": "^12.2.0",
     "cross-env": "^10.0.0",
     "mobx-restful-migrator": "^0.1.0",
@@ -34,14 +34,15 @@
     "husky": "^9.1.7",
     "koajax": "^3.1.2",
     "lint-staged": "^16.1.6",
+    "mobx-restful": "^2.1.3",
     "mobx-strapi": "^0.8.1",
     "prettier": "^3.6.2",
-    "swagger-typescript-api": "^13.2.11",
+    "swagger-typescript-api": "^13.2.13",
     "tsx": "^4.20.5",
     "typescript": "~5.9.2",
     "web-utility": "^4.6.1",
     "xlsx": "^0.18.5",
-    "zx": "^8.8.1"
+    "zx": "^8.8.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
