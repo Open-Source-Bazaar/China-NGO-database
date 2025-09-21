@@ -44,22 +44,3 @@ export class TargetUserModel extends UserModel {
 
 // Legacy exports for backward compatibility
 export { ApiOrganizationOrganization as Organization, User };
-
-// Legacy API class for gradual migration
-export class StrapiAPI {
-  constructor(
-    private baseURL: string,
-    private token: string,
-  ) {
-    // Set environment variables for the new models
-    process.env.STRAPI_API_URL = this.baseURL;
-    process.env.STRAPI_TOKEN = this.token;
-  }
-
-  get client() {
-    return strapiClient;
-  }
-
-  userStore = new TargetUserModel();
-  organizationStore = new TargetOrganizationModel();
-}

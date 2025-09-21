@@ -1,9 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { TargetOrganization, LogEntry } from '../types';
+import { MigrationEventBus, MigrationProgress } from 'mobx-restful-migrator';
+import { TargetOrganization, LogEntry, SourceOrganization } from '../types';
 import { LOG_CONSTANTS } from '../constants';
 
-export class ImportLogger {
+export class ImportLogger implements MigrationEventBus<SourceOrganization, TargetOrganization> {
   private timestamp: string;
   private logDir: string;
   private failedFile: string;
@@ -12,6 +13,7 @@ export class ImportLogger {
   public orgFailedCount: number = 0;
   public userFailedCount: number = 0;
   public skippedCount: number = 0;
+  private stats = { total: 0, success: 0, failed: 0, skipped: 0 };
 
   constructor() {
     this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -175,5 +177,81 @@ export class ImportLogger {
       userFailed: this.userFailedCount,
       skipped: this.skippedCount,
     };
+  }
+
+  // MigrationEventBus interface methods
+  async save({ index, sourceItem, targetItem }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.success++;
+    
+    console.log(`✅ [${index}] 成功导入: ${targetItem?.name || sourceItem?.常用名称 || 'Unknown'}`);
+    
+    // Log detailed information if needed
+    if (process.env.VERBOSE_LOGGING === 'true') {
+      console.log(`   源数据: ${sourceItem?.常用名称} (${sourceItem?.实体类型})`);
+      console.log(`   目标: ID=${targetItem?.id}, 类型=${targetItem?.entityType}\n`);
+    }
+  }
+
+  async skip({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.skipped++;
+    this.skippedCount++;
+
+    console.log(`⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
+
+    // Use existing logging method
+    if (sourceItem) {
+      await this.logSkipped(
+        this.convertToTargetOrganization(sourceItem),
+        error?.message || '数据跳过'
+      );
+    }
+  }
+
+  async error({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.failed++;
+    this.orgFailedCount++;
+
+    console.error(`❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
+
+    // Use existing logging method
+    if (sourceItem) {
+      await this.logFailed(
+        this.convertToTargetOrganization(sourceItem), 
+        error || new Error('未知错误')
+      );
+    }
+  }
+
+  // Convert SourceOrganization to TargetOrganization format expected by existing methods
+  private convertToTargetOrganization(source: SourceOrganization): TargetOrganization {
+    return {
+      name: source.常用名称 || '',
+      code: source.机构信用代码 || '',
+      entityType: source.实体类型 || '',
+      registrationCountry: source.注册国籍 || '',
+      description: source['机构／项目简介'] || '',
+    } as TargetOrganization;
+  }
+
+  // Get migration statistics
+  getStats() {
+    return this.stats;
+  }
+
+  // Print final statistics
+  printStats() {
+    console.log('\n=== 迁移统计 ===');
+    console.log(`总数: ${this.stats.total}`);
+    console.log(`成功: ${this.stats.success}`);
+    console.log(`失败: ${this.stats.failed}`);
+    console.log(`跳过: ${this.stats.skipped}`);
+    console.log(`成功率: ${((this.stats.success / this.stats.total) * 100).toFixed(1)}%`);
+    
+    if (this.stats.failed > 0 || this.stats.skipped > 0) {
+      console.log(`\n详细日志已保存到 logs/ 目录`);
+    }
   }
 }

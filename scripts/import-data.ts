@@ -12,7 +12,7 @@ import { ExcelReader } from './utils/excel-reader';
 import { Config, SourceOrganization } from './types';
 import { TargetOrganizationModel } from './utils/strapi-api';
 import { migrationMapping } from './migration/organization-mapping';
-import { MigratorLogger } from './utils/migrator-logger';
+import { ImportLogger } from './utils/import-logger';
 
 // Configuration
 const CONFIG: Config = {
@@ -52,7 +52,7 @@ async function* loadOrganizationData(): AsyncGenerator<SourceOrganization> {
 
 // Main function
 async function main(): Promise<void> {
-  let logger: MigratorLogger | null = null;
+  let logger: ImportLogger | null = null;
 
   // Handle process signals to ensure logs are saved on forced exit
   const handleExit = (signal: string) => {
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
     }
 
     // Initialize logger
-    logger = new MigratorLogger();
+    logger = new ImportLogger();
 
     // Create migrator instance
     const migrator = new RestMigrator(
@@ -174,5 +174,3 @@ if (require.main === module) {
   parseArgs();
   main();
 }
-
-export { DataTransformer, ExcelReader, TargetOrganizationModel as DataImporter, TargetOrganizationModel as StrapiAPI };
