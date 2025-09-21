@@ -2,11 +2,8 @@
  * 类型定义模块
  * 集中管理所有接口和类型定义
  */
-import {
-  Organization as _Organization,
-  UsersPermissionsRole,
-  UsersPermissionsUser,
-} from '../types';
+import type { ApiOrganizationOrganization } from '../types/generated/contentTypes';
+import type { PluginUsersPermissionsUser, PluginUsersPermissionsRole } from '../types/generated/contentTypes';
 
 // 配置接口
 export interface Config {
@@ -25,28 +22,10 @@ export {
   ServiceOrganizationServiceComponent as Service,
   ContactInternetContactComponent as InternetContact,
   QualificationCertificateComponent as Qualification,
-} from '../types';
+} from '../types/generated/components';
 
-// 扩展的用户数据接口（包含自定义字段）
-export interface ExtendedUserData extends Omit<UsersPermissionsUser, 'id'> {
-  // 用户创建时不需要ID，但可以包含其他可选字段
-  id?: number;
-  // 自定义字段
-  phone?: string;
-  // 其他可能需要的字段
-  password?: string;
-  // 角色可以是ID或完整对象
-  role?: number | UsersPermissionsRole;
-}
-
-export interface OrganizationData extends Omit<_Organization, 'contactUser'> {
-  // contactUser 可以是用户对象（用于创建）或用户ID（用于引用）
-  contactUser?: number | null;
-}
-
-// Excel行数据接口
-export interface Organization extends Partial<_Organization> {
-  // 添加索引签名以支持动态中文属性名访问
+// 源数据类型 (Excel中文字段)
+export interface SourceOrganization {
   [key: string]: any;
   常用名称?: string;
   机构信用代码?: string;
@@ -67,6 +46,27 @@ export interface Organization extends Partial<_Organization> {
   机构联系人联系人邮箱?: string;
 }
 
+// 目标数据类型 (Strapi英文字段)
+export interface TargetOrganization extends Omit<ApiOrganizationOrganization, 'contactUser'> {
+  contactUser?: number | null;
+}
+
+// 扩展的用户数据接口（包含自定义字段）
+export interface ExtendedUserData extends Omit<PluginUsersPermissionsUser, 'id'> {
+  // 用户创建时不需要ID，但可以包含其他可选字段
+  id?: number;
+  // 自定义字段
+  phone?: string;
+  // 其他可能需要的字段
+  password?: string;
+  // 角色可以是ID或完整对象
+  role?: number | PluginUsersPermissionsRole;
+}
+
+// 保持向后兼容
+export interface OrganizationData extends TargetOrganization {}
+export interface Organization extends SourceOrganization {}
+
 // 导入统计接口
 export interface ImportStats extends Record<string, number> {
   total: number;
@@ -79,7 +79,7 @@ export interface ImportStats extends Record<string, number> {
 export interface LogEntry {
   timestamp: string;
   organization: Pick<
-    OrganizationData,
+    TargetOrganization,
     'name' | 'code' | 'entityType' | 'registrationCountry'
   >;
   error?: string;
