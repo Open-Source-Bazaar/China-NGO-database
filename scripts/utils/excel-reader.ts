@@ -1,11 +1,11 @@
 import * as XLSX from 'xlsx';
-import { Organization } from '../types';
+import { SourceOrganization } from '../types';
 
 export class ExcelReader {
   static readExcelFile(
     filePath: string,
     sheetName: string | null = null,
-  ): Organization[] {
+  ): SourceOrganization[] {
     console.log(`读取 Excel 文件: ${filePath}`);
     const workbook = XLSX.readFile(filePath);
 
@@ -21,7 +21,7 @@ export class ExcelReader {
     console.log(`使用工作表: ${targetSheet}`);
 
     const worksheet = workbook.Sheets[targetSheet];
-    const data: Organization[] = XLSX.utils.sheet_to_json(worksheet);
+    const data: SourceOrganization[] = XLSX.utils.sheet_to_json(worksheet);
 
     console.log(`成功读取 ${data.length} 行数据`);
 

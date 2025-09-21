@@ -41,6 +41,3 @@ export class TargetUserModel extends UserModel {
 
   private generateRandomPassword = () => Math.random().toString(36).slice(-12);
 }
-
-// Legacy exports for backward compatibility
-export { ApiOrganizationOrganization as Organization, User };

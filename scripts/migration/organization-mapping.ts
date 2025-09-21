@@ -90,15 +90,11 @@ export const migrationMapping: MigrationSchema<
   }),
 
   机构联系人联系人姓名: (org) => {
-    const userData = UserTransformer.transformUser(org);
+    const value = UserTransformer.transformUser(org);
 
-    if (!userData) {
-      return {};
-    }
-
-    return {
+    return !value ? {} : {
       contactUser: {
-        value: userData,
+        value,
         model: TargetUserModel,
       },
     };

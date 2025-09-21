@@ -13,7 +13,7 @@ export class ImportLogger implements MigrationEventBus<SourceOrganization, Targe
   public orgFailedCount: number = 0;
   public userFailedCount: number = 0;
   public skippedCount: number = 0;
-  private stats = { total: 0, success: 0, failed: 0, skipped: 0 };
+  #stats = { total: 0, success: 0, failed: 0, skipped: 0 };
 
   constructor() {
     this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -181,8 +181,8 @@ export class ImportLogger implements MigrationEventBus<SourceOrganization, Targe
 
   // MigrationEventBus interface methods
   async save({ index, sourceItem, targetItem }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.stats.total++;
-    this.stats.success++;
+    this.#stats.total++;
+    this.#stats.success++;
     
     console.log(`✅ [${index}] 成功导入: ${targetItem?.name || sourceItem?.常用名称 || 'Unknown'}`);
     
@@ -194,64 +194,53 @@ export class ImportLogger implements MigrationEventBus<SourceOrganization, Targe
   }
 
   async skip({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.stats.total++;
-    this.stats.skipped++;
+    this.#stats.total++;
+    this.#stats.skipped++;
     this.skippedCount++;
 
     console.log(`⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
 
-    // Use existing logging method
+    // Use original source data for logging
     if (sourceItem) {
       await this.logSkipped(
-        this.convertToTargetOrganization(sourceItem),
+        sourceItem as any, // Use source data directly
         error?.message || '数据跳过'
       );
     }
   }
 
   async error({ index, sourceItem, error }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.stats.total++;
-    this.stats.failed++;
+    this.#stats.total++;
+    this.#stats.failed++;
     this.orgFailedCount++;
 
     console.error(`❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`);
 
-    // Use existing logging method
+    // Use original source data for logging
     if (sourceItem) {
       await this.logFailed(
-        this.convertToTargetOrganization(sourceItem), 
+        sourceItem as any, // Use source data directly
         error || new Error('未知错误')
       );
     }
   }
 
-  // Convert SourceOrganization to TargetOrganization format expected by existing methods
-  private convertToTargetOrganization(source: SourceOrganization): TargetOrganization {
-    return {
-      name: source.常用名称 || '',
-      code: source.机构信用代码 || '',
-      entityType: source.实体类型 || '',
-      registrationCountry: source.注册国籍 || '',
-      description: source['机构／项目简介'] || '',
-    } as TargetOrganization;
-  }
-
   // Get migration statistics
-  getStats() {
-    return this.stats;
+  get stats() {
+    return this.#stats;
   }
 
   // Print final statistics
   printStats() {
-    console.log('\n=== 迁移统计 ===');
-    console.log(`总数: ${this.stats.total}`);
-    console.log(`成功: ${this.stats.success}`);
-    console.log(`失败: ${this.stats.failed}`);
-    console.log(`跳过: ${this.stats.skipped}`);
-    console.log(`成功率: ${((this.stats.success / this.stats.total) * 100).toFixed(1)}%`);
+    const { total, success, failed, skipped } = this.#stats;
+    const successRate = ((success / total) * 100).toFixed(1);
     
-    if (this.stats.failed > 0 || this.stats.skipped > 0) {
-      console.log(`\n详细日志已保存到 logs/ 目录`);
-    }
+    console.log(`
+=== 迁移统计 ===
+总数: ${total}
+成功: ${success}
+失败: ${failed}
+跳过: ${skipped}
+成功率: ${successRate}%${failed > 0 || skipped > 0 ? '\n\n详细日志已保存到 logs/ 目录' : ''}`);
   }
 }
