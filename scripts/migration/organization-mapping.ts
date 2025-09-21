@@ -16,7 +16,7 @@ import { QualificationTransformer } from '../transformers/qualification-transfor
 import { UserTransformer } from '../transformers/user-transformer';
 import { DataUtils } from '../utils/data-utils';
 
-import { TargetUserModel } from '../models/strapi-models';
+import { TargetUserModel } from '../utils/strapi-api';
 
 export const migrationMapping: MigrationSchema<
   SourceOrganization,

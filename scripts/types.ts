@@ -63,10 +63,6 @@ export interface ExtendedUserData extends Omit<PluginUsersPermissionsUser, 'id'>
   role?: number | PluginUsersPermissionsRole;
 }
 
-// 保持向后兼容
-export interface OrganizationData extends TargetOrganization {}
-export interface Organization extends SourceOrganization {}
-
 // 导入统计接口
 export interface ImportStats extends Record<string, number> {
   total: number;

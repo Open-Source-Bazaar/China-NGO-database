@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { OrganizationData, LogEntry } from '../types';
+import { TargetOrganization, LogEntry } from '../types';
 import { LOG_CONSTANTS } from '../constants';
 
 export class ImportLogger {
@@ -59,18 +59,18 @@ export class ImportLogger {
     console.log(`   跳过记录: ${this.skippedFile}`);
   }
 
-  async logFailed(orgData: OrganizationData, error: any): Promise<void> {
+  async logFailed(orgData: TargetOrganization, error: any): Promise<void> {
     this.orgFailedCount++;
     this.logToFailedFile(orgData, error);
   }
 
-  async logUserFailed(orgData: OrganizationData, error: any): Promise<void> {
+  async logUserFailed(orgData: TargetOrganization, error: any): Promise<void> {
     this.userFailedCount++;
     this.logToUserFailedFile(orgData, error);
   }
 
   private async logToFailedFile(
-    orgData: OrganizationData,
+    orgData: TargetOrganization,
     error: any,
   ): Promise<void> {
     const logEntry: LogEntry = {
@@ -93,7 +93,7 @@ export class ImportLogger {
   }
 
   private async logToUserFailedFile(
-    orgData: OrganizationData,
+    orgData: TargetOrganization,
     error: any,
   ): Promise<void> {
     const logEntry: LogEntry = {
@@ -115,7 +115,7 @@ export class ImportLogger {
     await fs.promises.appendFile(this.userFailedFile, logLine + detailLine);
   }
 
-  async logSkipped(orgData: OrganizationData, reason: string): Promise<void> {
+  async logSkipped(orgData: TargetOrganization, reason: string): Promise<void> {
     this.skippedCount++;
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),

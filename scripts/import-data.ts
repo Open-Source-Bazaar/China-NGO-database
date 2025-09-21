@@ -1,23 +1,18 @@
 #!/usr/bin/env tsx
 
 /**
- * Strapi database import script (Refactored)
+ * Strapi database import script using MobX-RESTful-migrator
  * Support import NGO organization data from Excel file to Strapi database
  */
 
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { Config, OrganizationData, ExtendedUserData } from './types';
+import { RestMigrator } from 'mobx-restful-migrator';
 
-// Create WeakMap to store user data for organizations
-const userWeakMap = new WeakMap<OrganizationData, ExtendedUserData>();
-
-// Import refactored modules
-import { DataTransformer } from './transformers/data-transformer';
-import { UserTransformer } from './transformers/user-transformer';
 import { ExcelReader } from './utils/excel-reader';
-import { StrapiAPI } from './utils/strapi-api';
-import { DataImporter } from './utils/data-importer';
+import { Config, SourceOrganization } from './types';
+import { TargetOrganizationModel } from './utils/strapi-api';
+import { migrationMapping } from './migration/organization-mapping';
+import { MigratorLogger } from './utils/migrator-logger';
 
 // Configuration
 const CONFIG: Config = {
@@ -25,21 +20,45 @@ const CONFIG: Config = {
   STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'), // Default batch size
-  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'), // Default no delay
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
+  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'),
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
 
+// Data source generator function
+async function* loadOrganizationData(): AsyncGenerator<SourceOrganization> {
+  console.log(`正在读取 Excel 文件: ${CONFIG.EXCEL_FILE}`);
+
+  if (!fs.existsSync(CONFIG.EXCEL_FILE)) {
+    throw new Error(`Excel 文件不存在: ${CONFIG.EXCEL_FILE}`);
+  }
+
+  // Use existing Excel reader
+  const rawOrganizations = ExcelReader.readExcelFile(
+    CONFIG.EXCEL_FILE,
+    CONFIG.SHEET_NAME,
+  );
+
+  if (CONFIG.MAX_ROWS > 0) {
+    rawOrganizations.splice(CONFIG.MAX_ROWS);
+  }
+
+  console.log(`从 Excel 读取到 ${rawOrganizations.length} 条记录`);
+
+  // Yield each organization from existing reader
+  yield* rawOrganizations;
+}
+
 // Main function
 async function main(): Promise<void> {
-  let importer: DataImporter | null = null;
+  let logger: MigratorLogger | null = null;
 
   // Handle process signals to ensure logs are saved on forced exit
   const handleExit = (signal: string) => {
     console.log(`\n收到 ${signal} 信号，正在保存日志...`);
-    if (importer?.logger) {
-      importer.logger.saveToFiles();
+    if (logger) {
+      logger.saveToFiles();
       console.log('日志已保存，程序退出。');
     }
     process.exit(0);
@@ -57,75 +76,46 @@ async function main(): Promise<void> {
       throw new Error('请设置 STRAPI_TOKEN 环境变量或使用 DRY_RUN=true');
     }
 
-    const excelPath = path.join(process.cwd(), CONFIG.EXCEL_FILE);
-    if (!fs.existsSync(excelPath)) {
-      throw new Error(`Excel 文件不存在: ${excelPath}`);
-    }
-
-    // Read Excel data
-    console.log('读取 Excel 数据...');
-    const rawData = ExcelReader.readExcelFile(excelPath, CONFIG.SHEET_NAME);
-
-    // Limit data for testing
-    const limitedData =
-      CONFIG.MAX_ROWS > 0 ? rawData.slice(0, CONFIG.MAX_ROWS) : rawData;
-    if (CONFIG.MAX_ROWS > 0) {
-      console.log(
-        `限制导入数据量: ${limitedData.length} 行 (总共 ${rawData.length} 行)`,
-      );
-    }
-
-    // Transform data format with user support
-    console.log('转换数据格式...');
-    const organizations = limitedData
-      .map((row) => {
-        try {
-          const organization = DataTransformer.transformOrganization(row);
-
-          // Extract user data from the same row
-          const userData = UserTransformer.transformUser(row);
-
-          // Attach user data for later processing using WeakMap
-          if (userData) {
-            userWeakMap.set(organization, userData);
-          }
-
-          return organization;
-        } catch (error: any) {
-          const orgName = row['常用名称'] || row.name || 'Unknown';
-          console.warn(`转换数据失败，跳过行: ${orgName}`, error.message);
-          return null;
-        }
-      })
-      .filter((org): org is OrganizationData => org !== null && !!org.name);
-
-    console.log(`转换完成，准备导入 ${organizations.length} 个组织\n`);
-
-    // Show examples in dry run mode
     if (CONFIG.DRY_RUN) {
-      console.log('=== DRY RUN 模式 ===');
-      for (const [index, org] of organizations.slice(0, 3).entries()) {
-        console.log(`示例 ${index + 1}:`, JSON.stringify(org, null, 2));
-      }
-      console.log('==================\n');
+      console.log('🔥 DRY RUN 模式 - 不会实际创建数据\n');
     }
 
-    // Initialize API client and importer
-    const api = new StrapiAPI(CONFIG.STRAPI_URL, CONFIG.STRAPI_TOKEN);
-    importer = new DataImporter(
-      api,
-      userWeakMap,
-      CONFIG.BATCH_SIZE,
-      CONFIG.BATCH_DELAY,
-      CONFIG.DRY_RUN,
+    // Initialize logger
+    logger = new MigratorLogger();
+
+    // Create migrator instance
+    const migrator = new RestMigrator(
+      loadOrganizationData,
+      TargetOrganizationModel,
+      migrationMapping,
+      logger,
     );
 
-    // Start import
-    await importer.importOrganizations(organizations);
+    console.log('开始数据迁移...\n');
 
-    console.log('导入完成！');
+    let count = 0;
+    for await (const organization of migrator.boot()) {
+      count++;
+    }
+
+    // Print final statistics
+    logger.printStats();
+    
+    console.log('\n导入完成！');
+
+    // Save logs to files
+    await logger.saveToFiles();
+
   } catch (error: any) {
     console.error('导入失败:', error.message);
+    if (error.stack) {
+      console.error('错误堆栈:', error.stack);
+    }
+    
+    if (logger) {
+      await logger.saveToFiles();
+    }
+    
     process.exit(1);
   }
 }
@@ -136,9 +126,9 @@ function parseArgs(): void {
 
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-Strapi 数据导入工具 (增强版)
+Strapi 数据导入工具
 
-支持同时导入组织信息和联系人用户，并自动建立关联关系。
+支持从 Excel 文件导入 NGO 组织数据到 Strapi 数据库。
 
 用法:
   tsx scripts/import-data.ts [选项]
@@ -152,33 +142,24 @@ Strapi 数据导入工具 (增强版)
   STRAPI_TOKEN      Strapi API Token
   EXCEL_FILE        Excel 文件路径 (默认: 教育公益开放式数据库.xlsx)
   SHEET_NAME        工作表名称 (默认: 使用第一个工作表)
-  BATCH_SIZE        批次大小 (默认: 10)
-  BATCH_DELAY       批次间延迟秒数 (默认: 0, 表示无延迟)
-  MAX_ROWS          最大导入行数 (默认: 0, 表示导入所有行)
-  DRY_RUN           模拟模式 (true/false)
-
-功能特性:
-  - 导入组织基本信息
-  - 自动创建联系人用户账户
-  - 建立组织与用户的关联关系
-  - 支持用户名冲突自动处理
-  - 重复检查和错误处理
+  BATCH_SIZE        批次大小 (默认: 10) - 由迁移框架自动处理
+  BATCH_DELAY       批次间延迟秒数 (默认: 0) - 由迁移框架自动处理
+  MAX_ROWS          最大处理行数 (默认: 0，表示全部)
+  DRY_RUN           模拟运行 (true/false, 默认: false)
+  VERBOSE_LOGGING   详细日志 (true/false, 默认: false)
 
 示例:
-  # 正常导入
-  STRAPI_TOKEN=your_token tsx import-data.ts
+  # 基本使用
+  STRAPI_TOKEN=your_token tsx scripts/import-data.ts
   
-  # 模拟导入
-  DRY_RUN=true tsx import-data.ts
-  
-  # 导入指定工作表
-  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx import-data.ts
+  # 指定工作表
+  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx scripts/import-data.ts
   
   # 仅测试前10行
-  MAX_ROWS=10 DRY_RUN=true tsx import-data.ts
+  MAX_ROWS=10 DRY_RUN=true tsx scripts/import-data.ts
   
-  # 设置批次间延迟
-  BATCH_DELAY=2 STRAPI_TOKEN=your_token tsx import-data.ts
+  # 设置详细日志
+  VERBOSE_LOGGING=true STRAPI_TOKEN=your_token tsx scripts/import-data.ts
 `);
     process.exit(0);
   }
@@ -194,4 +175,4 @@ if (require.main === module) {
   main();
 }
 
-export { DataTransformer, ExcelReader, DataImporter, StrapiAPI };
+export { DataTransformer, ExcelReader, TargetOrganizationModel as DataImporter, TargetOrganizationModel as StrapiAPI };
