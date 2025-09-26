@@ -23,9 +23,8 @@ const CONFIG: Config = {
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
 
-// Main function
-async function main(): Promise<void> {
-  let logger: ImportLogger | null = null;
+async function main() {
+  const logger = new ImportLogger();
 
   // Handle process signals to ensure logs are saved on forced exit
   const handleExit = (signal: string) => {
@@ -36,7 +35,6 @@ async function main(): Promise<void> {
     }
     process.exit(0);
   };
-
   process.on('SIGINT', () => handleExit('SIGINT'));
   process.on('SIGTERM', () => handleExit('SIGTERM'));
   process.on('SIGQUIT', () => handleExit('SIGQUIT'));
@@ -45,18 +43,11 @@ async function main(): Promise<void> {
     console.log('=== Strapi 数据导入工具 ===\n');
 
     // Validate configuration
-    if (!CONFIG.STRAPI_TOKEN && !CONFIG.DRY_RUN) {
+    if (!CONFIG.STRAPI_TOKEN && !CONFIG.DRY_RUN)
       throw new Error('请设置 STRAPI_TOKEN 环境变量或使用 DRY_RUN=true');
-    }
 
-    if (CONFIG.DRY_RUN) {
-      console.log('🔥 DRY RUN 模式 - 不会实际创建数据\n');
-    }
+    if (CONFIG.DRY_RUN) console.log('🔥 DRY RUN 模式 - 不会实际创建数据\n');
 
-    // Initialize logger
-    logger = new ImportLogger();
-
-    // Create migrator instance
     const migrator = new RestMigrator(
       () => ExcelReader.readExcelFile(CONFIG.EXCEL_FILE, CONFIG.SHEET_NAME),
       TargetOrganizationModel,
@@ -70,14 +61,12 @@ async function main(): Promise<void> {
     for await (const organization of migrator.boot({
       dryRun: CONFIG.DRY_RUN,
     }))
-      count++;
+      if (++count === CONFIG.MAX_ROWS && CONFIG.MAX_ROWS > 0) break;
 
-    // Print final statistics
     logger.printStats();
 
-    console.log('\n导入完成！');
+    console.log('导入完成！');
 
-    // Save logs to files
     await logger.saveToFiles();
   } catch (error: any) {
     console.error('导入失败:', error.message);
@@ -89,8 +78,7 @@ async function main(): Promise<void> {
   }
 }
 
-// Handle command line arguments
-function parseArgs(): void {
+function parseArgs() {
   const args = process.argv.slice(2);
 
   if (args.includes('--help') || args.includes('-h')) {
@@ -116,24 +104,25 @@ Strapi 数据导入工具
   VERBOSE_LOGGING   详细日志 (true/false, 默认: false)
 
 示例:
-  # 基本使用
-  STRAPI_TOKEN=your_token tsx scripts/import-data.ts
+  # 正常导入
+  STRAPI_TOKEN=your_token tsx import-data.ts
   
-  # 指定工作表
-  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx scripts/import-data.ts
+  # 模拟导入
+  DRY_RUN=true tsx import-data.ts
+  
+  # 导入指定工作表
+  SHEET_NAME="甘肃省" STRAPI_TOKEN=your_token tsx import-data.ts
   
   # 仅测试前10行
-  MAX_ROWS=10 DRY_RUN=true tsx scripts/import-data.ts
+  MAX_ROWS=10 DRY_RUN=true tsx import-data.ts
   
   # 设置详细日志
-  VERBOSE_LOGGING=true STRAPI_TOKEN=your_token tsx scripts/import-data.ts
+  VERBOSE_LOGGING=true STRAPI_TOKEN=your_token tsx import-data.ts
 `);
     process.exit(0);
   }
 
-  if (args.includes('--dry-run') || args.includes('-d')) {
-    CONFIG.DRY_RUN = true;
-  }
+  if (args.includes('--dry-run') || args.includes('-d')) CONFIG.DRY_RUN = true;
 }
 
 parseArgs();

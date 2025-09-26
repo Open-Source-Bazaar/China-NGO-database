@@ -26,7 +26,7 @@ export {
   QualificationCertificateComponent as Qualification,
 } from '../types';
 
-// 目标数据类型 (Strapi英文字段)
+// 目标数据类型（Strapi 英文字段）
 export type TargetOrganization = Organization & Base;
 
 // 扩展的用户数据接口（包含自定义字段）
@@ -40,7 +40,7 @@ export type TargetUser = UsersPermissionsUser &
     role?: UsersPermissionsRole;
   };
 
-// 源数据类型 (Excel中文字段)
+// 源数据类型（Excel 中文表头）
 export interface SourceOrganization {
   常用名称?: string;
   机构信用代码?: string;
