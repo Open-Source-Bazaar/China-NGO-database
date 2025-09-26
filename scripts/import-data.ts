@@ -25,14 +25,6 @@ const CONFIG: Config = {
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
 
-// Data source generator function
-async function* loadOrganizationData() {
-  console.log(`正在读取 Excel 文件: ${CONFIG.EXCEL_FILE}`);
-
-  // Use existing Excel reader
-  yield* ExcelReader.readExcelFile(CONFIG.EXCEL_FILE, CONFIG.SHEET_NAME);
-}
-
 // Main function
 async function main(): Promise<void> {
   let logger: ImportLogger | null = null;
@@ -68,7 +60,7 @@ async function main(): Promise<void> {
 
     // Create migrator instance
     const migrator = new RestMigrator(
-      loadOrganizationData,
+      () => ExcelReader.readExcelFile(CONFIG.EXCEL_FILE, CONFIG.SHEET_NAME),
       TargetOrganizationModel,
       migrationMapping,
       logger,

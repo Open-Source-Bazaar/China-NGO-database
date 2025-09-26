@@ -1,13 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { HTTPError } from 'koajax';
 import { MigrationEventBus, MigrationProgress } from 'mobx-restful-migrator';
 
 import { TargetOrganization, LogEntry, SourceOrganization } from '../types';
 import { LOG_CONSTANTS } from '../constants';
 
 export class ImportLogger
-  implements MigrationEventBus<SourceOrganization, TargetOrganization>
-{
+  implements MigrationEventBus<SourceOrganization, TargetOrganization> {
   private timestamp: string;
   private logDir: string;
   private failedFile: string;
@@ -16,7 +16,7 @@ export class ImportLogger
   public orgFailedCount: number = 0;
   public userFailedCount: number = 0;
   public skippedCount: number = 0;
-  #stats = { total: 0, success: 0, failed: 0, skipped: 0 };
+  stats = { total: 0, success: 0, failed: 0, skipped: 0 };
 
   constructor() {
     this.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -64,6 +64,80 @@ export class ImportLogger
     console.log(`   跳过记录: ${this.skippedFile}`);
   }
 
+  async save({
+    index,
+    sourceItem,
+    targetItem,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.success++;
+
+    const { id, name, entityType } = targetItem as TargetOrganization;
+
+    console.log(
+      `✅ [${index}] 成功导入: ${name || sourceItem?.常用名称 || 'Unknown'}`,
+    );
+    if (process.env.VERBOSE_LOGGING === 'true')
+      console.log(`
+    源数据: ${sourceItem?.常用名称} (${sourceItem?.实体类型})
+    目标: ID=${id}, 类型=${entityType}
+`);
+  }
+
+  async error({
+    index,
+    sourceItem,
+    error,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.failed++;
+    this.orgFailedCount++;
+
+    console.error(
+      `❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
+    );
+
+    if (sourceItem) {
+      const logEntry: LogEntry = {
+        timestamp: new Date().toISOString(),
+        sourceItem,
+        error: error?.message || '未知错误',
+        errorDetails: (error as HTTPError)?.response?.body || error?.stack,
+      };
+      const logLine = `[${logEntry.timestamp}] ${sourceItem.常用名称} | ${error?.message || '未知错误'}\n`;
+      const detailLine = `   详细错误: ${JSON.stringify(logEntry.errorDetails, null, 2).replace(/\n/g, '\n   ')}\n\n`;
+
+      await fs.promises.appendFile(this.failedFile, logLine + detailLine);
+    }
+  }
+
+  async skip({
+    index,
+    sourceItem,
+    error,
+  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
+    this.stats.total++;
+    this.stats.skipped++;
+    this.skippedCount++;
+
+    console.log(
+      `⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
+    );
+
+    if (sourceItem) {
+      const logEntry: LogEntry = {
+        timestamp: new Date().toISOString(),
+        sourceItem,
+        error: error?.message || '数据跳过',
+        reason: error?.message || '数据跳过',
+      };
+      const logLine = `[${logEntry.timestamp}] ${sourceItem.常用名称} | ${error?.message || '数据跳过'}\n`;
+      const detailLine = `   详细信息: ${JSON.stringify(logEntry.sourceItem, null, 2).replace(/\n/g, '\n   ')}\n\n`;
+
+      await fs.promises.appendFile(this.skippedFile, logLine + detailLine);
+    }
+  }
+
   async saveToFiles(): Promise<void> {
     // Add summary to log files
     const summary = LOG_CONSTANTS.SUMMARY_TEMPLATE.replace(
@@ -98,112 +172,8 @@ export class ImportLogger
     }
   }
 
-  getSummary(): { orgFailed: number; userFailed: number; skipped: number } {
-    return {
-      orgFailed: this.orgFailedCount,
-      userFailed: this.userFailedCount,
-      skipped: this.skippedCount,
-    };
-  }
-
-  async save({
-    index,
-    sourceItem,
-    targetItem,
-  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.#stats.total++;
-    this.#stats.success++;
-
-    const { id, name, entityType } = targetItem as TargetOrganization;
-
-    console.log(
-      `✅ [${index}] 成功导入: ${name || sourceItem?.常用名称 || 'Unknown'}`,
-    );
-    if (process.env.VERBOSE_LOGGING === 'true')
-      console.log(`
-    源数据: ${sourceItem?.常用名称} (${sourceItem?.实体类型})
-    目标: ID=${id}, 类型=${entityType}
-`);
-  }
-
-  async skip({
-    index,
-    sourceItem,
-    error,
-  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.#stats.total++;
-    this.#stats.skipped++;
-    this.skippedCount++;
-
-    console.log(
-      `⚠️ [${index}] 跳过: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
-    );
-    
-    // Move logSkipped logic here
-    if (sourceItem) {
-      const logEntry: LogEntry = {
-        timestamp: new Date().toISOString(),
-        organization: {
-          name: sourceItem.常用名称 || '',
-          code: sourceItem.机构信用代码 || '',
-          entityType: sourceItem.实体类型 || '',
-          registrationCountry: sourceItem.注册国籍 || '',
-        },
-        error: error?.message || '数据跳过',
-        reason: error?.message || '数据跳过',
-      };
-
-      // Append to log file immediately
-      const logLine = `[${logEntry.timestamp}] ${sourceItem.常用名称} | ${error?.message || '数据跳过'}\n`;
-      const detailLine = `   详细信息: ${JSON.stringify(logEntry.organization, null, 2).replace(/\n/g, '\n   ')}\n\n`;
-
-      await fs.promises.appendFile(this.skippedFile, logLine + detailLine);
-    }
-  }
-
-  async error({
-    index,
-    sourceItem,
-    error,
-  }: MigrationProgress<SourceOrganization, TargetOrganization>) {
-    this.#stats.total++;
-    this.#stats.failed++;
-    this.orgFailedCount++;
-
-    console.error(
-      `❌ [${index}] 处理失败: ${sourceItem?.常用名称 || 'Unknown'} - ${error?.message}`,
-    );
-    
-    // Move logFailed logic here
-    if (sourceItem) {
-      const logEntry: LogEntry = {
-        timestamp: new Date().toISOString(),
-        organization: {
-          name: sourceItem.常用名称 || '',
-          code: sourceItem.机构信用代码 || '',
-          entityType: sourceItem.实体类型 || '',
-          registrationCountry: sourceItem.注册国籍 || '',
-        },
-        error: error?.message || '未知错误',
-        errorDetails: error?.response?.data || error?.stack,
-      };
-
-      // Append to log file immediately
-      const logLine = `[${logEntry.timestamp}] ${sourceItem.常用名称} | ${error?.message || '未知错误'}\n`;
-      const detailLine = `   详细错误: ${JSON.stringify(logEntry.errorDetails, null, 2).replace(/\n/g, '\n   ')}\n\n`;
-
-      await fs.promises.appendFile(this.failedFile, logLine + detailLine);
-    }
-  }
-
-  // Get migration statistics
-  get stats() {
-    return this.#stats;
-  }
-
-  // Print final statistics
   printStats() {
-    const { total, success, failed, skipped } = this.#stats;
+    const { total, success, failed, skipped } = this.stats;
     const successRate = ((success / total) * 100).toFixed(1);
 
     console.log(`

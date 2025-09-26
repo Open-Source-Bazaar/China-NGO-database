@@ -74,10 +74,7 @@ export interface ImportStats extends Record<string, number> {
 // 日志条目接口
 export interface LogEntry {
   timestamp: string;
-  organization: Pick<
-    TargetOrganization,
-    'name' | 'code' | 'entityType' | 'registrationCountry'
-  >;
+  sourceItem?: object;
   error?: string;
   errorDetails?: any;
   reason?: string;
