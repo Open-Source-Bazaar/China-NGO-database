@@ -4,10 +4,10 @@ import { StrapiListModel, UserModel } from 'mobx-strapi';
 
 import { TargetOrganization, TargetUser } from '../types';
 
-const { STRAPI_API_URL, STRAPI_TOKEN } = process.env;
+const { STRAPI_URL = 'http://localhost:1337', STRAPI_TOKEN } = process.env;
 
 export const strapiClient = new HTTPClient({
-  baseURI: new URL('api/', STRAPI_API_URL) + '',
+  baseURI: new URL('api/', STRAPI_URL) + '',
   responseType: 'json',
 }).use(({ request }, next) => {
   request.headers = {

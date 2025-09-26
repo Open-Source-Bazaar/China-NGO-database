@@ -15,8 +15,6 @@ export interface Config {
   STRAPI_TOKEN: string;
   EXCEL_FILE: string;
   SHEET_NAME: string | null;
-  BATCH_SIZE: number;
-  BATCH_DELAY: number;
   DRY_RUN: boolean;
   MAX_ROWS: number;
 }

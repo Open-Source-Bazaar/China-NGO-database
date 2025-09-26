@@ -19,8 +19,6 @@ const CONFIG: Config = {
   STRAPI_TOKEN: process.env.STRAPI_TOKEN || '',
   EXCEL_FILE: process.env.EXCEL_FILE || '教育公益开放式数据库.xlsx',
   SHEET_NAME: process.env.SHEET_NAME || null,
-  BATCH_SIZE: parseInt(process.env.BATCH_SIZE || '10'),
-  BATCH_DELAY: parseInt(process.env.BATCH_DELAY || '0'),
   DRY_RUN: process.env.DRY_RUN === 'true',
   MAX_ROWS: parseInt(process.env.MAX_ROWS || '0'),
 };
@@ -65,13 +63,14 @@ async function main(): Promise<void> {
       migrationMapping,
       logger,
     );
-
     console.log('开始数据迁移...\n');
 
     let count = 0;
-    for await (const organization of migrator.boot()) {
+
+    for await (const organization of migrator.boot({
+      dryRun: CONFIG.DRY_RUN,
+    }))
       count++;
-    }
 
     // Print final statistics
     logger.printStats();
@@ -112,8 +111,6 @@ Strapi 数据导入工具
   STRAPI_TOKEN      Strapi API Token
   EXCEL_FILE        Excel 文件路径 (默认: 教育公益开放式数据库.xlsx)
   SHEET_NAME        工作表名称 (默认: 使用第一个工作表)
-  BATCH_SIZE        批次大小 (默认: 10) - 由迁移框架自动处理
-  BATCH_DELAY       批次间延迟秒数 (默认: 0) - 由迁移框架自动处理
   MAX_ROWS          最大处理行数 (默认: 0，表示全部)
   DRY_RUN           模拟运行 (true/false, 默认: false)
   VERBOSE_LOGGING   详细日志 (true/false, 默认: false)
