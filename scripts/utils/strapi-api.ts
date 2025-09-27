@@ -1,36 +1,42 @@
-import { Context, HTTPClient } from 'koajax';
-import { Base, StrapiListModel, UserModel } from 'mobx-strapi';
+import { HTTPClient } from 'koajax';
+import { NewData } from 'mobx-restful';
+import { StrapiListModel, UserModel } from 'mobx-strapi';
 
-import { Organization, UsersPermissionsUser as User } from '../../types';
+import { TargetOrganization, TargetUser } from '../types';
 
-export { Organization, User };
+const { STRAPI_URL = 'http://localhost:1337', STRAPI_TOKEN } = process.env;
 
-export class OrganizationModel extends StrapiListModel<Organization & Base> {
+export const strapiClient = new HTTPClient({
+  baseURI: new URL('api/', STRAPI_URL) + '',
+  responseType: 'json',
+}).use(({ request }, next) => {
+  request.headers = {
+    Authorization: `Bearer ${STRAPI_TOKEN}`,
+    ...request.headers,
+    'Strapi-Response-Format': 'v4',
+  };
+  return next();
+});
+
+export class TargetOrganizationModel extends StrapiListModel<TargetOrganization> {
   baseURI = 'organizations';
-
-  constructor(public client: HTTPClient<Context>) {
-    super();
-  }
+  client = strapiClient;
 }
 
-export class StrapiAPI {
-  constructor(
-    private baseURL: string,
-    private token: string,
-  ) {
-    this.client.baseURI = new URL('api/', this.baseURL) + '';
-    this.userStore.client = this.client;
+export class TargetUserModel extends UserModel<TargetUser> {
+  baseURI = 'users';
+  client = strapiClient;
+
+  override async updateOne(data: Partial<NewData<TargetUser>>, id?: number) {
+    const userData = {
+      ...data,
+      role: data.role || 1,
+      password:
+        data.password || (id ? undefined : this.generateRandomPassword()),
+      confirmed: data.confirmed ?? true,
+    };
+    return super.updateOne(userData, id);
   }
 
-  client = new HTTPClient({ responseType: 'json' }).use(({ request }, next) => {
-    request.headers = {
-      Authorization: `Bearer ${this.token}`,
-      ...request.headers,
-      'Strapi-Response-Format': 'v4',
-    };
-    return next();
-  });
-
-  userStore = new UserModel();
-  organizationStore = new OrganizationModel(this.client);
+  private generateRandomPassword = () => Math.random().toString(36).slice(-12);
 }

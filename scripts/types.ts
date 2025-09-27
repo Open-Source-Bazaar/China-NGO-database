@@ -2,8 +2,9 @@
  * 类型定义模块
  * 集中管理所有接口和类型定义
  */
+import { Base, BaseUser } from 'mobx-strapi';
 import {
-  Organization as _Organization,
+  Organization,
   UsersPermissionsRole,
   UsersPermissionsUser,
 } from '../types';
@@ -14,8 +15,6 @@ export interface Config {
   STRAPI_TOKEN: string;
   EXCEL_FILE: string;
   SHEET_NAME: string | null;
-  BATCH_SIZE: number;
-  BATCH_DELAY: number;
   DRY_RUN: boolean;
   MAX_ROWS: number;
 }
@@ -27,27 +26,22 @@ export {
   QualificationCertificateComponent as Qualification,
 } from '../types';
 
+// 目标数据类型（Strapi 英文字段）
+export type TargetOrganization = Organization & Base;
+
 // 扩展的用户数据接口（包含自定义字段）
-export interface ExtendedUserData extends Omit<UsersPermissionsUser, 'id'> {
-  // 用户创建时不需要ID，但可以包含其他可选字段
-  id?: number;
-  // 自定义字段
-  phone?: string;
-  // 其他可能需要的字段
-  password?: string;
-  // 角色可以是ID或完整对象
-  role?: number | UsersPermissionsRole;
-}
+export type TargetUser = UsersPermissionsUser &
+  BaseUser & {
+    // 自定义字段
+    phone?: string;
+    // 其他可能需要的字段
+    password?: string;
+    // 角色可以是ID或完整对象
+    role?: UsersPermissionsRole;
+  };
 
-export interface OrganizationData extends Omit<_Organization, 'contactUser'> {
-  // contactUser 可以是用户对象（用于创建）或用户ID（用于引用）
-  contactUser?: number | null;
-}
-
-// Excel行数据接口
-export interface Organization extends Partial<_Organization> {
-  // 添加索引签名以支持动态中文属性名访问
-  [key: string]: any;
+// 源数据类型（Excel 中文表头）
+export interface SourceOrganization {
   常用名称?: string;
   机构信用代码?: string;
   实体类型?: string;
@@ -78,10 +72,7 @@ export interface ImportStats extends Record<string, number> {
 // 日志条目接口
 export interface LogEntry {
   timestamp: string;
-  organization: Pick<
-    OrganizationData,
-    'name' | 'code' | 'entityType' | 'registrationCountry'
-  >;
+  sourceItem?: object;
   error?: string;
   errorDetails?: any;
   reason?: string;

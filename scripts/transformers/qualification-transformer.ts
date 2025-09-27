@@ -1,9 +1,9 @@
-import { Qualification, Organization } from '../types';
+import { Qualification, SourceOrganization } from '../types';
 import { QUALIFICATION_INDICATORS, QUALIFICATION_TYPES } from '../constants';
 
 export class QualificationTransformer {
   static transformQualifications = (
-    organization: Organization,
+    organization: SourceOrganization,
   ): Qualification[] => {
     // Transform qualification indicators using map
     const qualifications = QUALIFICATION_INDICATORS.filter(

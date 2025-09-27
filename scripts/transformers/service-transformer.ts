@@ -1,4 +1,4 @@
-import { Service, InternetContact, Organization } from '../types';
+import { Service, InternetContact, SourceOrganization } from '../types';
 import {
   SERVICE_CATEGORY_MAPPING,
   EDUCATION_FIELDS,
@@ -8,7 +8,7 @@ import {
 } from '../constants';
 
 export class ServiceTransformer {
-  static transformServices = (organization: Organization): Service[] => {
+  static transformServices = (organization: SourceOrganization): Service[] => {
     const services: Service[] = [];
 
     // extract service information from various education related fields
@@ -61,17 +61,16 @@ export class ServiceTransformer {
     return services;
   };
 
-  static extractTargetGroups = (organization: Organization) =>
+  static extractTargetGroups = (organization: SourceOrganization) =>
     TARGET_GROUP_FIELDS.map((field) => organization[field])
       .filter(Boolean)
       .join('; ');
 
-  static transformContacts(organization: Organization): InternetContact {
+  static transformContacts(organization: SourceOrganization): InternetContact {
     const contact: InternetContact = {};
 
     // 官网
-    const website =
-      organization['机构官网'] || organization.internetContact?.website || '';
+    const website = organization['机构官网'] || '';
 
     if (website) contact.website = website;
 

@@ -128,7 +128,6 @@ EXCEL_FILE=my-data.xlsx STRAPI_TOKEN=your_api_token tsx import-data.ts
 | `STRAPI_URL`   | `http://localhost:1337`     | Strapi 服务器地址                      |
 | `STRAPI_TOKEN` | -                           | Strapi API Token（必填，除非 DRY_RUN） |
 | `EXCEL_FILE`   | `教育公益开放式数据库.xlsx` | Excel 文件路径                         |
-| `BATCH_SIZE`   | `10`                        | 批量处理大小                           |
 | `DRY_RUN`      | `false`                     | 是否为模拟模式                         |
 
 ### 命令行选项
@@ -207,13 +206,7 @@ tsx import-data.ts --dry-run
    DRY_RUN=true tsx import-data.ts
    ```
 
-2. **减少批次大小**
-
-   ```bash
-   BATCH_SIZE=1 STRAPI_TOKEN=your_token tsx import-data.ts
-   ```
-
-3. **查看详细错误信息**
+2. **查看详细错误信息**
    - 脚本会输出详细的错误信息
    - 检查 Strapi 服务器日志
    - 查看 `logs/` 目录下自动生成的错误日志文件
@@ -234,9 +227,7 @@ tsx import-data.ts --dry-run
 
 ### 性能优化
 
-1. 调整 `BATCH_SIZE` 参数
-2. 实现并行处理
-3. 添加数据缓存机制
+1. 添加数据缓存机制
 
 ## 日志文件
 
