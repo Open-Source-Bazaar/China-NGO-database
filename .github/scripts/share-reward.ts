@@ -39,9 +39,41 @@ const { author, assignees }: PRMeta = await (
   await $`gh pr view ${PR_URL} --json author,assignees`
 ).json();
 
-const users = [author.login, ...assignees.map(({ login }) => login)];
+// Function to check if a user is a Copilot/bot user
+function isCopilotUser(login: string): boolean {
+  const lowerLogin = login.toLowerCase();
+  return (
+    lowerLogin.includes('copilot') ||
+    lowerLogin.includes('[bot]') ||
+    lowerLogin === 'github-actions[bot]' ||
+    lowerLogin.endsWith('[bot]')
+  );
+}
 
-const averageReward = (parseFloat(reward) / users.length).toFixed(2);
+// Filter out Copilot and bot users from the list
+const allUsers = [author.login, ...assignees.map(({ login }) => login)];
+const users = allUsers.filter((login) => !isCopilotUser(login));
+
+console.log(`All users: ${allUsers.join(', ')}`);
+console.log(`Filtered users (excluding bots/copilot): ${users.join(', ')}`);
+
+// Handle case where all users are bots/copilot
+if (users.length === 0) {
+  console.log(
+    'No real users found (all users are bots/copilot). Skipping reward distribution.',
+  );
+  console.log(`Filtered users: ${allUsers.join(', ')}`);
+  process.exit(0);
+}
+
+const rewardNumber = parseFloat(reward);
+
+if (isNaN(rewardNumber) || rewardNumber <= 0)
+  throw new RangeError(
+    `Reward amount is not a valid number, can not proceed with reward distribution. Received reward value: ${reward}`,
+  );
+
+const averageReward = (rewardNumber / users.length).toFixed(2);
 
 const list: Reward[] = users.map((login) => ({
   issue: `#${issueNumber}`,
