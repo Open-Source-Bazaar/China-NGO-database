@@ -7,7 +7,7 @@
 1. Generate a [PAT][1] with `read:packages` authorization
 2. Run Sign-in command in your terminal, and use PAT as password:
    ```shell
-   npm login --scope=@idea2app --registry=https://npm.pkg.github.com
+   npm login --scope=@open-source-bazaar --registry=https://npm.pkg.github.com
    ```
 
 ### 2. Installation
